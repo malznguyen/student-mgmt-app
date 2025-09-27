@@ -1,0 +1,23 @@
+{
+  "students": [
+    {"_id":"std_20230001","full_name":"Nguyen Van A","email":"a@example.com","major_dept_id":"HTTT","year":2023,"phone":"0912345678"},
+    {"_id":"std_20230002","full_name":"Tran Thi B","email":"b@example.com","major_dept_id":"CNTT","year":2023}
+  ],
+  "instructors": [
+    {"_id":"ins_0001","full_name":"Pham Thi Giang","email":"giang.pham@univ.edu","dept_id":"HTTT","title":"ThS"}
+  ],
+  "departments": [
+    {"_id":"HTTT","name":"Hệ thống thông tin","office":"B201","phone":"028-3-123456"},
+    {"_id":"CNTT","name":"Công nghệ thông tin"}
+  ],
+  "courses": [
+    {"_id":"CSDL202","title":"Cơ sở dữ liệu nâng cao","credits":3,"dept_id":"HTTT","prereq_ids":["CSDL101"]}
+  ],
+  "class_sections": [
+    {"_id":"CSDL202_2025A_01","course_id":"CSDL202","semester":"2025A","section_no":"01","instructor_id":"ins_0001","capacity":60,"room":"A101",
+     "schedule":[{"dow":"Mon","start":"07:30","end":"09:30"},{"dow":"Wed","start":"07:30","end":"09:30"}]}
+  ],
+  "enrollments": [
+    {"student_id":"std_20230001","section_id":"CSDL202_2025A_01","semester":"2025A","midterm":8.0,"final":8.5,"bonus":0.5,"letter":"A-"}
+  ]
+}
