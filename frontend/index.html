@@ -1,13 +1,310 @@
-﻿<!DOCTYPE html><html lang="vi"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Student Mgmt — Baseline</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head><body class="min-h-screen bg-slate-50">
-<div class="max-w-3xl mx-auto p-6 space-y-4">
-  <h1 class="text-2xl font-bold">Baseline Ready ✅</h1>
-  <p>Backend: Flask at <code>/api/health</code> • Frontend: Tailwind + Alpine + Chart.js</p>
-  <a class="inline-block px-4 py-2 rounded-xl bg-black text-white" href="/pages/students.html">Go to Students</a>
-</div>
-</body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Management Dashboard</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-700" x-data="{ sidebarOpen: false }" x-on:keydown.escape.window="sidebarOpen = false">
+  <div class="flex min-h-screen">
+    <div x-cloak x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-30 bg-slate-900/40 md:hidden" aria-hidden="true" @click="sidebarOpen = false"></div>
+    <aside x-cloak x-show="sidebarOpen" x-transition:enter="transition transform duration-200" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition transform duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 md:static md:translate-x-0 md:block">
+      <div class="flex items-center gap-3 px-6 h-16 border-b border-slate-100">
+        <img src="/assets/logo.svg" alt="Student Management logo" class="h-9 w-9" />
+        <div>
+          <p class="text-sm uppercase tracking-widest text-slate-400">Student Mgmt</p>
+          <p class="text-base font-semibold text-slate-800">Admin Console</p>
+        </div>
+      </div>
+      <nav class="px-4 py-6 space-y-1 text-sm font-medium">
+        <a href="/" aria-current="page" class="flex items-center gap-3 rounded-xl px-3 py-2 bg-slate-900/5 text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 9.75 12 3l9 6.75V21a.75.75 0 0 1-.75.75H3.75A.75.75 0 0 1 3 21V9.75Z" /><path d="M9 21v-6h6v6" stroke-linecap="round" /></svg>
+          </span>
+          Dashboard
+        </a>
+        <a href="/pages/students.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" stroke-linecap="round" /></svg>
+          </span>
+          Students
+        </a>
+        <a href="/pages/courses.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 5.25h15" stroke-linecap="round" /><path d="M6 4.5h12A1.5 1.5 0 0 1 19.5 6v13.5a.75.75 0 0 1-.75.75H5.25a.75.75 0 0 1-.75-.75V6A1.5 1.5 0 0 1 6 4.5Z" /><path d="M9 9h6m-6 4.5h6" stroke-linecap="round" /></svg>
+          </span>
+          Courses
+        </a>
+        <a href="/pages/sections.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 6.75h15" stroke-linecap="round" /><path d="M4.5 12h15" stroke-linecap="round" /><path d="M4.5 17.25h15" stroke-linecap="round" /></svg>
+          </span>
+          Sections
+        </a>
+        <a href="/pages/enrollments.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 4.5h15v15h-15z" /><path d="M8.25 8.25h7.5v7.5h-7.5z" /><path d="M8.25 4.5v3.75M15.75 4.5v3.75M4.5 12h3.75m7.5 0H19.5M8.25 16.5V19.5m7.5-3v3" stroke-linecap="round" /></svg>
+          </span>
+          Enrollments
+        </a>
+      </nav>
+      <div class="mt-auto px-6 py-6 border-t border-slate-100 text-xs text-slate-500">
+        <p>Academic year <span class="font-semibold text-slate-700">2025</span></p>
+        <p class="mt-1">Updated <span class="font-semibold text-slate-700">today</span></p>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-h-screen">
+      <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div class="flex items-center justify-between px-4 sm:px-6 h-16">
+          <div class="flex items-center gap-3">
+            <button type="button" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900 md:hidden" @click="sidebarOpen = true" aria-label="Open navigation menu">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 7.5h15M4.5 12h15M4.5 16.5h15" stroke-linecap="round" /></svg>
+            </button>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-slate-400">Dashboard</p>
+              <h1 class="text-lg font-semibold text-slate-900">Welcome back, team</h1>
+            </div>
+          </div>
+          <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+            <a href="/" class="text-slate-900">Overview</a>
+            <a href="/pages/students.html" class="hover:text-slate-900">Students</a>
+            <a href="/pages/courses.html" class="hover:text-slate-900">Courses</a>
+            <a href="/pages/sections.html" class="hover:text-slate-900">Sections</a>
+            <a href="/pages/enrollments.html" class="hover:text-slate-900">Enrollments</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="flex-1">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="dashboardPage()">
+          <section class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 class="text-3xl font-semibold text-slate-900">Academic snapshot</h2>
+              <p class="mt-2 text-slate-600">Track enrollment, retention, and performance metrics for the current academic cycle.</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <a href="/pages/students.html" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-slate-300">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
+                Add student
+              </a>
+              <a href="/pages/courses.html" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+                Manage catalog
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 5.25 15.75 12 9 18.75" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </a>
+            </div>
+          </section>
+
+          <section class="mt-10 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            <template x-for="card in cards" :key="card.name">
+              <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-xs uppercase tracking-wide text-slate-400" x-text="card.name"></p>
+                    <p class="mt-2 text-3xl font-semibold text-slate-900" x-text="card.value"></p>
+                  </div>
+                  <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900/10 text-slate-700">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M4.5 12.75 9 17.25 19.5 6.75" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </span>
+                </div>
+                <p class="mt-3 text-xs font-medium text-emerald-600" x-text="card.delta"></p>
+              </article>
+            </template>
+          </section>
+
+          <section class="mt-10 grid gap-6 lg:grid-cols-5">
+            <article class="lg:col-span-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <header class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-lg font-semibold text-slate-900">Students by major</h3>
+                  <p class="text-sm text-slate-500">Current headcount across departments</p>
+                </div>
+                <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Updated weekly</span>
+              </header>
+              <div class="mt-6"><canvas id="majorChart" aria-label="Bar chart showing students by major" role="img"></canvas></div>
+            </article>
+            <article class="lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <header class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-lg font-semibold text-slate-900">Enrollments per semester</h3>
+                  <p class="text-sm text-slate-500">Multi-term trend, including summer sessions</p>
+                </div>
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">Rolling 4 terms</span>
+              </header>
+              <div class="mt-6"><canvas id="enrollmentChart" aria-label="Line chart showing enrollments per semester" role="img"></canvas></div>
+            </article>
+          </section>
+
+          <section class="mt-10 grid gap-6 lg:grid-cols-3">
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+              <h3 class="text-lg font-semibold text-slate-900">Advising checklist</h3>
+              <ul class="mt-4 space-y-3 text-sm">
+                <template x-for="item in checklist" :key="item.title">
+                  <li class="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3">
+                    <span class="mt-1 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white" x-text="item.step"></span>
+                    <div>
+                      <p class="font-medium text-slate-800" x-text="item.title"></p>
+                      <p class="text-slate-500" x-text="item.description"></p>
+                    </div>
+                  </li>
+                </template>
+              </ul>
+            </article>
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 class="text-lg font-semibold text-slate-900">Quick links</h3>
+              <ul class="mt-4 space-y-3 text-sm">
+                <template x-for="link in quickLinks" :key="link.href">
+                  <li>
+                    <a :href="link.href" class="group flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-slate-300 hover:bg-slate-50">
+                      <div>
+                        <p class="font-medium text-slate-800" x-text="link.title"></p>
+                        <p class="text-xs text-slate-500" x-text="link.description"></p>
+                      </div>
+                      <svg class="h-4 w-4 text-slate-400 transition group-hover:text-slate-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5.25 15.75 12 9 18.75" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </a>
+                  </li>
+                </template>
+              </ul>
+            </article>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const dashboardMock = {
+      students: [
+        { id: 'S-1001', name: 'Asha Patel', major: 'Computer Science' },
+        { id: 'S-1002', name: 'Ethan Wright', major: 'Mathematics' },
+        { id: 'S-1003', name: 'Lina Alvarez', major: 'Biology' },
+        { id: 'S-1004', name: 'Noah Kim', major: 'Computer Science' },
+        { id: 'S-1005', name: 'Maya Chen', major: 'Economics' },
+        { id: 'S-1006', name: 'Gabriel Souza', major: 'Physics' },
+        { id: 'S-1007', name: 'Leah Johnson', major: 'Computer Science' },
+        { id: 'S-1008', name: 'Omar Ali', major: 'Economics' }
+      ],
+      courses: [
+        { id: 'CIS-210', title: 'Data Structures' },
+        { id: 'BIO-120', title: 'Genetics' },
+        { id: 'MTH-240', title: 'Linear Algebra' },
+        { id: 'ECO-201', title: 'Microeconomics' },
+        { id: 'PHY-330', title: 'Quantum Mechanics' },
+        { id: 'CIS-330', title: 'Operating Systems' }
+      ],
+      sections: [
+        { id: 'SEC-101', capacity: 32 },
+        { id: 'SEC-102', capacity: 28 },
+        { id: 'SEC-103', capacity: 24 },
+        { id: 'SEC-104', capacity: 26 },
+        { id: 'SEC-105', capacity: 22 },
+        { id: 'SEC-106', capacity: 18 }
+      ],
+      enrollments: [
+        { semester: '2024 Fall', count: 310 },
+        { semester: '2025 Spring', count: 298 },
+        { semester: '2025 Summer', count: 184 },
+        { semester: '2025 Fall', count: 327 }
+      ]
+    };
+
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('dashboardPage', () => ({
+        cards: [
+          { name: 'Total students', value: dashboardMock.students.length, delta: '+12% vs LY' },
+          { name: 'Active courses', value: dashboardMock.courses.length, delta: '+3 new this term' },
+          { name: 'Sections this term', value: dashboardMock.sections.length, delta: '92% capacity filled' },
+          { name: 'Enrollments', value: dashboardMock.enrollments.reduce((sum, entry) => sum + entry.count, 0), delta: '+18 since last week' }
+        ],
+        checklist: [
+          { step: 1, title: 'Confirm advising rosters', description: 'Finalize assignments for new transfer students.' },
+          { step: 2, title: 'Publish midterm grades', description: 'Grades are due Friday at 5pm for 200-level courses.' },
+          { step: 3, title: 'Audit waitlists', description: 'Sections exceeding 95% capacity require approval.' }
+        ],
+        quickLinks: [
+          { title: 'Review student directory', description: 'Search and manage profiles.', href: '/pages/students.html' },
+          { title: 'Update course catalog', description: 'Edit credit hours & descriptions.', href: '/pages/courses.html' },
+          { title: 'Coordinate sections', description: 'Assign rooms and instructors.', href: '/pages/sections.html' }
+        ]
+      }));
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const majorCounts = dashboardMock.students.reduce((acc, student) => {
+        acc[student.major] = (acc[student.major] || 0) + 1;
+        return acc;
+      }, {});
+      const majors = Object.keys(majorCounts);
+      const majorValues = majors.map((major) => majorCounts[major]);
+
+      const enrollmentsBySemester = dashboardMock.enrollments;
+
+      const barCtx = document.getElementById('majorChart');
+      if (barCtx) {
+        new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels: majors,
+            datasets: [
+              {
+                label: 'Students',
+                data: majorValues,
+                backgroundColor: '#1e293b'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: { ticks: { color: '#475569' } },
+              y: { ticks: { color: '#475569' }, beginAtZero: true, suggestedMax: Math.max(...majorValues, 5) + 2 }
+            }
+          }
+        });
+      }
+
+      const lineCtx = document.getElementById('enrollmentChart');
+      if (lineCtx) {
+        new Chart(lineCtx, {
+          type: 'line',
+          data: {
+            labels: enrollmentsBySemester.map((item) => item.semester),
+            datasets: [
+              {
+                label: 'Enrollments',
+                data: enrollmentsBySemester.map((item) => item.count),
+                fill: false,
+                borderColor: '#0f172a',
+                backgroundColor: '#0f172a',
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: '#f97316'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              x: { ticks: { color: '#475569' } },
+              y: { ticks: { color: '#475569' }, beginAtZero: false }
+            }
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
