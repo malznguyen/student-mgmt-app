@@ -72,5 +72,123 @@
       "pronouns": "he/him",
       "phone": "+1 (555) 010-1008"
     }
+  ],
+  "courses": [
+    {
+      "_id": "CS101",
+      "title": "Introduction to Computer Science",
+      "dept_id": "CS",
+      "credits": 3,
+      "description": "Foundational problem-solving, algorithms, and Python programming.",
+      "prereq_ids": []
+    },
+    {
+      "_id": "CS202",
+      "title": "Data Structures",
+      "dept_id": "CS",
+      "credits": 4,
+      "description": "Implementation of trees, graphs, and advanced data organization techniques.",
+      "prereq_ids": ["CS101"]
+    },
+    {
+      "_id": "MATH220",
+      "title": "Linear Algebra",
+      "dept_id": "MATH",
+      "credits": 3,
+      "description": "Vector spaces, eigenvalues, and applications for scientific computing.",
+      "prereq_ids": []
+    },
+    {
+      "_id": "ECON210",
+      "title": "Microeconomics",
+      "dept_id": "ECON",
+      "credits": 3,
+      "description": "Consumer theory, firm behavior, and market efficiency.",
+      "prereq_ids": []
+    }
+  ],
+  "class_sections": [
+    {
+      "_id": "SEC-CS101-2025A-01",
+      "course_id": "CS101",
+      "semester": "2025A",
+      "section_no": "01",
+      "instructor_id": "I-1001",
+      "capacity": 32,
+      "room": "ENG-201",
+      "schedule": ["Mon 09:00-10:15", "Wed 09:00-10:15"]
+    },
+    {
+      "_id": "SEC-CS202-2025A-01",
+      "course_id": "CS202",
+      "semester": "2025A",
+      "section_no": "01",
+      "instructor_id": "I-1002",
+      "capacity": 28,
+      "room": "ENG-305",
+      "schedule": ["Tue 11:00-12:15", "Thu 11:00-12:15"]
+    },
+    {
+      "_id": "SEC-MATH220-2025A-01",
+      "course_id": "MATH220",
+      "semester": "2025A",
+      "section_no": "01",
+      "instructor_id": "I-2001",
+      "capacity": 40,
+      "room": "SCI-110",
+      "schedule": ["Mon 14:00-15:15", "Wed 14:00-15:15"]
+    },
+    {
+      "_id": "SEC-ECON210-2025A-01",
+      "course_id": "ECON210",
+      "semester": "2025A",
+      "section_no": "01",
+      "instructor_id": "I-3001",
+      "capacity": 35,
+      "room": "BUS-120",
+      "schedule": ["Tue 09:30-10:45", "Thu 09:30-10:45"]
+    }
+  ],
+  "enrollments": [
+    {
+      "_id": "S-1001:SEC-CS101-2025A-01",
+      "student_id": "S-1001",
+      "section_id": "SEC-CS101-2025A-01",
+      "semester": "2025A",
+      "midterm": 88,
+      "final": 92,
+      "bonus": 2,
+      "letter": "A-"
+    },
+    {
+      "_id": "S-1002:SEC-MATH220-2025A-01",
+      "student_id": "S-1002",
+      "section_id": "SEC-MATH220-2025A-01",
+      "semester": "2025A",
+      "midterm": 91,
+      "final": 87,
+      "bonus": 1,
+      "letter": "A-"
+    },
+    {
+      "_id": "S-1003:SEC-ECON210-2025A-01",
+      "student_id": "S-1003",
+      "section_id": "SEC-ECON210-2025A-01",
+      "semester": "2025A",
+      "midterm": 84,
+      "final": 89,
+      "bonus": 0,
+      "letter": "B+"
+    },
+    {
+      "_id": "S-1004:SEC-CS202-2025A-01",
+      "student_id": "S-1004",
+      "section_id": "SEC-CS202-2025A-01",
+      "semester": "2025A",
+      "midterm": 79,
+      "final": 85,
+      "bonus": 3,
+      "letter": "B"
+    }
   ]
 }

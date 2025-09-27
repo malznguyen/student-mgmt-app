@@ -88,7 +88,7 @@
               <p class="mt-2 text-slate-600">Browse and curate the academic catalog students can enroll in next term.</p>
             </div>
             <div class="flex flex-wrap gap-3">
-              <button type="button" @click="openModal()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
                 Add course
               </button>
@@ -131,53 +131,78 @@
               </div>
             </div>
 
-            <div class="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              <template x-if="filteredCourses.length === 0">
-                <div class="sm:col-span-2 xl:col-span-3 flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 py-12 text-center">
-                  <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
-                    <svg class="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7.5 4.5h9L21 12l-4.5 7.5h-9L3 12 7.5 4.5Z" /><path d="M12 9v6" stroke-linecap="round" /><path d="M9 12h6" stroke-linecap="round" /></svg>
-                  </span>
-                  <div>
-                    <h3 class="text-lg font-semibold text-slate-900">No courses found</h3>
-                    <p class="mt-1 text-sm text-slate-500">Adjust filters or add a new course to the catalog.</p>
-                  </div>
-                  <button type="button" @click="openModal()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
-                    Add course
-                  </button>
+            <div class="mt-8">
+              <div x-cloak x-show="loadError" x-transition class="rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700" role="alert">
+                <p class="font-medium">Unable to load courses.</p>
+                <p class="mt-1 text-rose-600" x-text="loadError"></p>
+              </div>
+
+              <template x-if="loading">
+                <div class="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                  <template x-for="i in 6" :key="i">
+                    <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <div class="space-y-4">
+                        <span class="skeleton-line h-5 w-28 rounded"></span>
+                        <div class="space-y-2">
+                          <span class="skeleton-line h-4 w-48 rounded"></span>
+                          <span class="skeleton-line h-3 w-full rounded"></span>
+                          <span class="skeleton-line h-3 w-3/4 rounded"></span>
+                        </div>
+                        <span class="skeleton-line h-4 w-20 rounded"></span>
+                      </div>
+                    </article>
+                  </template>
                 </div>
               </template>
 
-              <template x-for="course in filteredCourses" :key="course.id">
-                <article class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                      <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700">
-                        <span class="h-2 w-2 rounded-full bg-slate-400"></span>
-                        <span x-text="course.dept_id"></span>
-                      </span>
-                      <span class="text-xs font-semibold text-slate-400" x-text="`${course.credits} credits`"></span>
-                    </div>
+              <div x-cloak x-show="!loading && !loadError" class="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                <template x-if="filteredCourses.length === 0">
+                  <div class="sm:col-span-2 xl:col-span-3 flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 py-12 text-center">
+                    <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
+                      <svg class="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7.5 4.5h9L21 12l-4.5 7.5h-9L3 12 7.5 4.5Z" /><path d="M12 9v6" stroke-linecap="round" /><path d="M9 12h6" stroke-linecap="round" /></svg>
+                    </span>
                     <div>
-                      <h3 class="text-lg font-semibold text-slate-900" x-text="course.title"></h3>
-                      <p class="text-sm text-slate-500" x-text="course.description"></p>
+                      <h3 class="text-lg font-semibold text-slate-900">No courses found</h3>
+                      <p class="mt-1 text-sm text-slate-500">Adjust filters or add a new course to the catalog.</p>
                     </div>
+                    <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
+                      Add course
+                    </button>
                   </div>
-                  <div class="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
-                    <p class="font-medium text-slate-700" x-text="course.id"></p>
-                    <div class="flex items-center gap-2">
-                      <button type="button" @click="openModal(course)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4.5 19.5 3.75-.938a2 2 0 0 0 .938-.52l9.02-9.02a1.5 1.5 0 0 0-2.121-2.122l-9.02 9.02a2 2 0 0 0-.52.938L4.5 19.5Z" /><path d="M14.25 6.75 17.25 9.75" /></svg>
-                        Edit
-                      </button>
-                      <button type="button" @click="removeCourse(course.id)" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 7.5h10.5" stroke-linecap="round" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M8.25 7.5V18a1.5 1.5 0 0 0 1.5 1.5h4.5A1.5 1.5 0 0 0 15.75 18V7.5" /></svg>
-                        Delete
-                      </button>
+                </template>
+
+                <template x-for="course in filteredCourses" :key="course._id">
+                  <article class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div class="space-y-3">
+                      <div class="flex items-center justify-between">
+                        <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700">
+                          <span class="h-2 w-2 rounded-full bg-slate-400"></span>
+                          <span x-text="course.dept_id"></span>
+                        </span>
+                        <span class="text-xs font-semibold text-slate-400" x-text="`${course.credits} credits`"></span>
+                      </div>
+                      <div>
+                        <h3 class="text-lg font-semibold text-slate-900" x-text="course.title"></h3>
+                        <p class="text-sm text-slate-500" x-text="course.description"></p>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              </template>
+                    <div class="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+                      <p class="font-medium text-slate-700" x-text="course._id"></p>
+                      <div class="flex items-center gap-2">
+                        <button type="button" @click="openEdit(course)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900">
+                          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4.5 19.5 3.75-.938a2 2 0 0 0 .938-.52l9.02-9.02a1.5 1.5 0 0 0-2.121-2.122l-9.02 9.02a2 2 0 0 0-.52.938L4.5 19.5Z" /><path d="M14.25 6.75 17.25 9.75" /></svg>
+                          Edit
+                        </button>
+                        <button type="button" @click="deleteCourse(course._id)" :disabled="deletingId === course._id" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50">
+                          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 7.5h10.5" stroke-linecap="round" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M8.25 7.5V18a1.5 1.5 0 0 0 1.5 1.5h4.5A1.5 1.5 0 0 0 15.75 18V7.5" /></svg>
+                          <span x-text="deletingId === course._id ? 'Removing…' : 'Delete'"></span>
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                </template>
+              </div>
             </div>
           </section>
         </div>
@@ -200,8 +225,8 @@
           <div class="relative w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl" x-trap.noscroll="modalOpen" x-transition>
             <header class="flex items-start justify-between gap-3">
               <div>
-                <p class="text-xs uppercase tracking-widest text-slate-400" x-text="editingCourse ? 'Update course' : 'Create course'"></p>
-                <h2 class="text-2xl font-semibold text-slate-900" x-text="editingCourse ? 'Edit course' : 'Add new course'"></h2>
+                <p class="text-xs uppercase tracking-widest text-slate-400" x-text="isEditing ? 'Update course' : 'Create course'"></p>
+                <h2 class="text-2xl font-semibold text-slate-900" x-text="isEditing ? 'Edit course' : 'Add new course'"></h2>
               </div>
               <button type="button" class="rounded-lg border border-transparent p-2 text-slate-400 hover:text-slate-600" @click="closeModal()" aria-label="Close dialog">
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 9l6 6m0-6-6 6" stroke-linecap="round" /></svg>
@@ -210,9 +235,9 @@
             <form class="mt-6 space-y-4" @submit.prevent="saveCourse()">
               <div>
                 <label for="course-id" class="text-sm font-medium text-slate-700">Course code</label>
-                <input id="course-id" type="text" x-model="form.id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. CIS-210" required />
+                <input id="course-id" type="text" x-model="form._id" :disabled="isEditing" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:bg-slate-50" :class="errors._id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. CS101" required />
                 <p class="mt-1 text-xs text-slate-500">Use the registrar approved catalog code.</p>
-                <p x-show="errors.id" x-text="errors.id" class="mt-1 text-xs font-medium text-rose-600"></p>
+                <p x-show="errors._id" x-text="errors._id" class="mt-1 text-xs font-medium text-rose-600"></p>
               </div>
               <div>
                 <label for="course-title" class="text-sm font-medium text-slate-700">Title</label>
@@ -241,10 +266,10 @@
                 <textarea id="course-description" rows="3" x-model="form.description" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" placeholder="Brief summary of the course"></textarea>
               </div>
               <div class="flex items-center justify-end gap-3 pt-4">
-                <button type="button" class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:border-slate-300" @click="closeModal()">Cancel</button>
-                <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+                <button type="button" class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:border-slate-300 disabled:opacity-50" @click="closeModal()" :disabled="saving">Cancel</button>
+                <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:opacity-50" :disabled="saving">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.25 12.75 9 16.5l9-9" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                  Save course
+                  <span x-text="saving ? 'Saving…' : 'Save course'"></span>
                 </button>
               </div>
             </form>
@@ -255,15 +280,6 @@
   </div>
 
   <script>
-    const courseSeed = [
-      { id: 'CIS-210', title: 'Data Structures', credits: 3, dept_id: 'CS', description: 'Foundational algorithms and data abstractions with weekly labs.' },
-      { id: 'CIS-330', title: 'Operating Systems', credits: 4, dept_id: 'CS', description: 'Kernel architecture, scheduling, and concurrency design.' },
-      { id: 'MTH-240', title: 'Linear Algebra', credits: 3, dept_id: 'MATH', description: 'Vector spaces, eigenvalues, and applications to data science.' },
-      { id: 'BIO-120', title: 'Genetics', credits: 4, dept_id: 'BIO', description: 'Fundamentals of DNA replication, transcription, and expression.' },
-      { id: 'ECON-201', title: 'Microeconomics', credits: 3, dept_id: 'ECON', description: 'Consumer theory, firm behavior, and market equilibrium.' },
-      { id: 'PHYS-330', title: 'Quantum Mechanics', credits: 4, dept_id: 'PHYS', description: 'Quantum theory of matter with emphasis on atomic systems.' }
-    ];
-
     const courseDepartments = [
       { id: 'CS', name: 'Computer Science' },
       { id: 'MATH', name: 'Mathematics' },
@@ -278,36 +294,93 @@
         search: '',
         selectedDept: '',
         selectedCredits: '',
-        courses: courseSeed.map((course) => ({ ...course })),
+        loading: true,
+        loadError: '',
+        courses: [],
         departments: courseDepartments,
         modalOpen: false,
-        editingCourse: null,
-        form: { id: '', title: '', credits: 3, dept_id: '', description: '' },
+        isEditing: false,
+        saving: false,
+        deletingId: '',
+        toastTimeout: null,
+        form: { _id: '', title: '', credits: 3, dept_id: '', description: '' },
         errors: {},
         toast: { visible: false, message: '', detail: '', variant: 'success' },
         get filteredCourses() {
+          const term = this.search.trim().toLowerCase();
           return this.courses.filter((course) => {
             const matchesDept = this.selectedDept ? course.dept_id === this.selectedDept : true;
-            const matchesCredits = this.selectedCredits ? Number(course.credits) === Number(this.selectedCredits) : true;
-            const term = this.search.trim().toLowerCase();
+            const matchesCredits = this.selectedCredits
+              ? Number(course.credits) === Number(this.selectedCredits)
+              : true;
             const matchesSearch = term
-              ? [course.title, course.id, course.dept_id].some((value) => (value || '').toLowerCase().includes(term))
+              ? [course.title, course._id, course.dept_id]
+                  .some((value) => String(value || '').toLowerCase().includes(term))
               : true;
             return matchesDept && matchesCredits && matchesSearch;
           });
         },
-        openModal(course = null) {
-          this.editingCourse = course ? { ...course } : null;
-          this.form = course ? { ...course } : { id: '', title: '', credits: 3, dept_id: '', description: '' };
+        init() {
+          this.fetchCourses();
+        },
+        blankForm() {
+          return { _id: '', title: '', credits: 3, dept_id: '', description: '' };
+        },
+        async fetchCourses() {
+          this.loading = true;
+          this.loadError = '';
+          try {
+            const response = await fetch('/api/courses');
+            const payload = await response.json().catch(() => null);
+            if (!response.ok || !Array.isArray(payload)) {
+              const message = (payload && payload.error) || `Request failed with status ${response.status}`;
+              throw new Error(message);
+            }
+            this.courses = payload.map((course) => ({
+              _id: course._id ?? '',
+              title: course.title ?? '',
+              dept_id: course.dept_id ?? '',
+              credits: Number.isFinite(Number(course.credits)) ? Number(course.credits) : '',
+              description: course.description ?? ''
+            }));
+          } catch (error) {
+            console.error('Failed to load courses', error);
+            this.courses = [];
+            this.loadError = error instanceof Error ? error.message : 'Please refresh and try again.';
+            this.showToast('Unable to load courses.', 'error', 'Check your network connection.');
+          } finally {
+            this.loading = false;
+          }
+        },
+        openCreate() {
+          this.isEditing = false;
+          this.form = this.blankForm();
           this.errors = {};
+          this.saving = false;
+          this.modalOpen = true;
+        },
+        openEdit(course) {
+          this.isEditing = true;
+          this.form = {
+            _id: course._id,
+            title: course.title,
+            dept_id: course.dept_id,
+            credits: course.credits || 0,
+            description: course.description || ''
+          };
+          this.errors = {};
+          this.saving = false;
           this.modalOpen = true;
         },
         closeModal() {
+          if (this.saving) return;
           this.modalOpen = false;
+          this.form = this.blankForm();
+          this.errors = {};
         },
         validate() {
           const nextErrors = {};
-          if (!this.form.id.trim()) nextErrors.id = 'Course code is required.';
+          if (!this.form._id.trim()) nextErrors._id = 'Course code is required.';
           if (!this.form.title.trim()) nextErrors.title = 'Course title is required.';
           if (!this.form.dept_id) nextErrors.dept_id = 'Select a department.';
           if (this.form.credits === '' || Number.isNaN(Number(this.form.credits)) || Number(this.form.credits) <= 0) {
@@ -316,38 +389,99 @@
           this.errors = nextErrors;
           return Object.keys(nextErrors).length === 0;
         },
-        saveCourse() {
+        async saveCourse() {
           if (!this.validate()) {
             this.showToast('Please review the highlighted fields.', 'error', 'Invalid course details');
             return;
           }
-          if (this.editingCourse) {
-            const index = this.courses.findIndex((course) => course.id === this.editingCourse.id);
-            if (index !== -1) {
-              this.courses.splice(index, 1, { ...this.form });
-              this.showToast('Course updated successfully.', 'success', 'Catalog entry saved.');
-            }
-          } else {
-            if (this.courses.some((course) => course.id === this.form.id)) {
-              this.errors.id = 'A course with this code already exists.';
-              this.showToast('Duplicate course code.', 'error', 'Use a unique catalog code.');
+
+          this.saving = true;
+          const payload = {
+            _id: this.form._id.trim(),
+            title: this.form.title.trim(),
+            dept_id: this.form.dept_id,
+            credits: this.form.credits,
+            description: this.form.description.trim()
+          };
+
+          const method = this.isEditing ? 'PUT' : 'POST';
+          const url = this.isEditing
+            ? `/api/courses/${encodeURIComponent(this.form._id)}`
+            : '/api/courses';
+
+          if (this.isEditing) {
+            delete payload._id;
+          }
+
+          try {
+            const response = await fetch(url, {
+              method,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const result = await response.json().catch(() => null);
+
+            if (!response.ok || !result) {
+              const details = (result && result.details) || {};
+              this.errors = details;
+              const detailMessage =
+                details.title || details._id || details.dept_id || Object.values(details)[0] || '';
+              this.showToast((result && result.error) || 'Unable to save course.', 'error', detailMessage);
               return;
             }
-            this.courses = [...this.courses, { ...this.form }];
-            this.showToast('Course added to catalog.', 'success', 'Publish changes when ready.');
+
+            await this.fetchCourses();
+            this.closeModal();
+            this.showToast(
+              this.isEditing ? 'Course updated successfully.' : 'Course added to catalog.',
+              'success',
+              this.isEditing ? 'Catalog entry saved.' : 'Course is now available to sections.'
+            );
+          } catch (error) {
+            console.error('Failed to save course', error);
+            this.showToast('Unable to save course.', 'error', 'Check your network connection.');
+          } finally {
+            this.saving = false;
           }
-          this.closeModal();
         },
-        removeCourse(id) {
+        async deleteCourse(id) {
           if (!window.confirm('Remove this course from the catalog?')) {
             return;
           }
-          this.courses = this.courses.filter((course) => course.id !== id);
-          this.showToast('Course removed.', 'success', 'Students will no longer see this course.');
+          this.deletingId = id;
+          try {
+            const response = await fetch(`/api/courses/${encodeURIComponent(id)}`, {
+              method: 'DELETE'
+            });
+            const result = await response.json().catch(() => null);
+
+            if (!response.ok || !result || !result.deleted) {
+              this.showToast(
+                (result && result.error) || 'Unable to delete course.',
+                'error',
+                'Please try again in a moment.'
+              );
+              return;
+            }
+
+            this.courses = this.courses.filter((course) => course._id !== id);
+            const detail = result.active_sections
+              ? `${result.active_sections} section(s) remain linked to this course.`
+              : 'Course removed from the catalog.';
+            this.showToast('Course removed.', 'success', detail);
+          } catch (error) {
+            console.error('Failed to delete course', error);
+            this.showToast('Unable to delete course.', 'error', 'Check your network connection.');
+          } finally {
+            this.deletingId = '';
+          }
         },
         showToast(message, variant = 'success', detail = '') {
+          if (this.toastTimeout) {
+            clearTimeout(this.toastTimeout);
+          }
           this.toast = { visible: true, message, variant, detail };
-          setTimeout(() => {
+          this.toastTimeout = setTimeout(() => {
             this.toast.visible = false;
           }, 3200);
         }

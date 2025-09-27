@@ -88,9 +88,9 @@
               <p class="mt-2 text-slate-600">Monitor performance, identify grade risks, and manage grading deadlines.</p>
             </div>
             <div class="flex flex-wrap gap-3">
-              <button type="button" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-slate-300">
+              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-slate-300">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12" stroke-linecap="round" /><path d="M6 12h12" stroke-linecap="round" /></svg>
-                Create report
+                Add enrollment
               </button>
               <button type="button" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5.25 15.75 12 9 18.75" stroke-linecap="round" stroke-linejoin="round" /></svg>
@@ -132,106 +132,271 @@
               </div>
             </div>
 
-            <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs text-slate-500">
-              <div class="flex items-center gap-2">
-                <input id="bulk-select" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-300" disabled />
-                <label for="bulk-select" class="font-medium text-slate-500">Bulk select (coming soon)</label>
+            <div class="mt-6">
+              <div x-cloak x-show="loadError" x-transition class="rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700" role="alert">
+                <p class="font-medium">Unable to load enrollments.</p>
+                <p class="mt-1 text-rose-600" x-text="loadError"></p>
               </div>
-              <button type="button" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-400" disabled>
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.5 12h15" stroke-linecap="round" /><path d="M4.5 16.5h15" stroke-linecap="round" /><path d="M4.5 7.5h15" stroke-linecap="round" /></svg>
-                Apply bulk actions
-              </button>
-            </div>
 
-            <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-              <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 text-left text-sm table-sticky-header">
-                  <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
-                    <tr>
-                      <th scope="col" class="px-4 py-3 font-semibold">Student</th>
-                      <th scope="col" class="px-4 py-3 font-semibold">Section</th>
-                      <th scope="col" class="px-4 py-3 font-semibold">Semester</th>
-                      <th scope="col" class="px-4 py-3 font-semibold">Midterm</th>
-                      <th scope="col" class="px-4 py-3 font-semibold">Final</th>
-                      <th scope="col" class="px-4 py-3 font-semibold">Bonus</th>
-                      <th scope="col" class="px-4 py-3 font-semibold">Letter</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 bg-white">
-                    <template x-for="record in filteredEnrollments" :key="record.id">
-                      <tr class="hover:bg-slate-50">
-                        <td class="px-4 py-3">
-                          <div class="font-medium text-slate-900" x-text="record.student_name"></div>
-                          <p class="text-xs text-slate-500" x-text="record.student_id"></p>
-                        </td>
-                        <td class="px-4 py-3">
-                          <div class="font-medium text-slate-900" x-text="record.section"></div>
-                          <p class="text-xs text-slate-500" x-text="record.course"></p>
-                        </td>
-                        <td class="px-4 py-3">
-                          <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700">
-                            <span class="h-2 w-2 rounded-full bg-slate-400"></span>
-                            <span x-text="record.semester"></span>
-                          </span>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-slate-700" x-text="record.midterm"></td>
-                        <td class="px-4 py-3 text-sm text-slate-700" x-text="record.final"></td>
-                        <td class="px-4 py-3 text-sm text-slate-700" x-text="record.bonus"></td>
-                        <td class="px-4 py-3">
-                          <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold" :class="badgeClass(record.letter)">
-                            <span x-text="record.letter"></span>
-                            <span class="hidden sm:inline" x-text="record.status"></span>
-                          </span>
-                        </td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <template x-if="filteredEnrollments.length === 0">
-              <div class="mt-6 flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 py-12 text-center">
-                <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
-                  <svg class="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.5 4.5h15v15h-15z" /><path d="M8.25 8.25h7.5v7.5h-7.5z" /><path d="M8.25 4.5v3.75M15.75 4.5v3.75M4.5 12h3.75m7.5 0H19.5M8.25 16.5V19.5m7.5-3v3" stroke-linecap="round" /></svg>
-                </span>
-                <div>
-                  <h3 class="text-lg font-semibold text-slate-900">No enrollment records</h3>
-                  <p class="mt-1 text-sm text-slate-500">Broaden your filters or refresh after instructors submit grades.</p>
+              <template x-if="loading">
+                <div class="overflow-hidden rounded-2xl border border-slate-200">
+                  <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200 text-left text-sm table-sticky-header">
+                      <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                        <tr>
+                          <th scope="col" class="px-4 py-3 font-semibold">Student</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Section</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Semester</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Midterm</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Final</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Bonus</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Letter</th>
+                          <th scope="col" class="px-4 py-3 font-semibold text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 bg-white">
+                        <template x-for="i in 6" :key="i">
+                          <tr>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-40 rounded"></span></td>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-36 rounded"></span></td>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-20 rounded"></span></td>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-16 rounded"></span></td>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-16 rounded"></span></td>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-16 rounded"></span></td>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-12 rounded"></span></td>
+                            <td class="px-4 py-3 text-right"><span class="skeleton-line h-4 w-24 rounded ml-auto block"></span></td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            </template>
+              </template>
+
+              <template x-if="!loading && !loadError && filteredEnrollments.length">
+                <div class="overflow-hidden rounded-2xl border border-slate-200">
+                  <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200 text-left text-sm table-sticky-header">
+                      <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                        <tr>
+                          <th scope="col" class="px-4 py-3 font-semibold">Student</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Section</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Semester</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Midterm</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Final</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Bonus</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Letter</th>
+                          <th scope="col" class="px-4 py-3 font-semibold text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 bg-white">
+                        <template x-for="record in filteredEnrollments" :key="record._id">
+                          <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-3">
+                              <div class="font-medium text-slate-900" x-text="record.student_name || record.student_id"></div>
+                              <p class="text-xs text-slate-500" x-text="record.student_id"></p>
+                            </td>
+                            <td class="px-4 py-3">
+                              <div class="font-medium text-slate-900" x-text="record.course_title || record.section_id"></div>
+                              <p class="text-xs text-slate-500" x-text="record.section_label"></p>
+                            </td>
+                            <td class="px-4 py-3">
+                              <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700">
+                                <span class="h-2 w-2 rounded-full bg-slate-400"></span>
+                                <span x-text="record.semester"></span>
+                              </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-slate-700" x-text="formatScore(record.midterm)"></td>
+                            <td class="px-4 py-3 text-sm text-slate-700" x-text="formatScore(record.final)"></td>
+                            <td class="px-4 py-3 text-sm text-slate-700" x-text="formatScore(record.bonus)"></td>
+                            <td class="px-4 py-3">
+                              <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold" :class="badgeClass(record.letter)">
+                                <span x-text="record.letter || '—'"></span>
+                                <span class="hidden sm:inline" x-text="letterStatus(record.letter)"></span>
+                              </span>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                              <div class="inline-flex items-center gap-2">
+                                <button type="button" @click="openEdit(record)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900">
+                                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4.5 19.5 3.75-.938a2 2 0 0 0 .938-.52l9.02-9.02a1.5 1.5 0 0 0-2.121-2.122l-9.02 9.02a2 2 0 0 0-.52.938L4.5 19.5Z" /><path d="M14.25 6.75 17.25 9.75" /></svg>
+                                  Edit
+                                </button>
+                                <button type="button" @click="deleteEnrollment(record._id)" :disabled="deletingId === record._id" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50">
+                                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 7.5h10.5" stroke-linecap="round" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M8.25 7.5V18a1.5 1.5 0 0 0 1.5 1.5h4.5A1.5 1.5 0 0 0 15.75 18V7.5" /></svg>
+                                  <span x-text="deletingId === record._id ? 'Removing…' : 'Delete'"></span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </template>
+
+              <template x-if="!loading && !loadError && filteredEnrollments.length === 0">
+                <div class="mt-6 flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 py-12 text-center">
+                  <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
+                    <svg class="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.5 4.5h15v15h-15z" /><path d="M8.25 8.25h7.5v7.5h-7.5z" /><path d="M8.25 4.5v3.75M15.75 4.5v3.75M4.5 12h3.75m7.5 0H19.5M8.25 16.5V19.5m7.5-3v3" stroke-linecap="round" /></svg>
+                  </span>
+                  <div>
+                    <h3 class="text-lg font-semibold text-slate-900">No enrollment records</h3>
+                    <p class="mt-1 text-sm text-slate-500">Broaden your filters or refresh after instructors submit grades.</p>
+                  </div>
+                </div>
+              </template>
+            </div>
           </section>
         </div>
       </main>
     </div>
   </div>
 
-  <script>
-    const enrollmentSeed = [
-      { id: 'ENR-1', student_id: 'S-1001', student_name: 'Asha Patel', section: 'SEC-101', course: 'Data Structures', semester: '2025 Spring', midterm: 88, final: 93, bonus: 5, letter: 'A', status: 'Honors' },
-      { id: 'ENR-2', student_id: 'S-1002', student_name: 'Ethan Wright', section: 'SEC-103', course: 'Linear Algebra', semester: '2025 Spring', midterm: 76, final: 82, bonus: 2, letter: 'B', status: 'Passing' },
-      { id: 'ENR-3', student_id: 'S-1003', student_name: 'Lina Alvarez', section: 'SEC-104', course: 'Genetics', semester: '2025 Summer', midterm: 91, final: 89, bonus: 4, letter: 'A-', status: 'Dean list' },
-      { id: 'ENR-4', student_id: 'S-1004', student_name: 'Noah Kim', section: 'SEC-102', course: 'Operating Systems', semester: '2025 Spring', midterm: 68, final: 75, bonus: 3, letter: 'B-', status: 'Coaching' },
-      { id: 'ENR-5', student_id: 'S-1005', student_name: 'Maya Chen', section: 'SEC-105', course: 'Microeconomics', semester: '2025 Fall', midterm: 95, final: 97, bonus: 4, letter: 'A', status: 'Honors' },
-      { id: 'ENR-6', student_id: 'S-1006', student_name: 'Gabriel Souza', section: 'SEC-106', course: 'Quantum Mechanics', semester: '2025 Fall', midterm: 84, final: 80, bonus: 1, letter: 'B', status: 'Passing' },
-      { id: 'ENR-7', student_id: 'S-1007', student_name: 'Leah Johnson', section: 'SEC-101', course: 'Data Structures', semester: '2025 Spring', midterm: 92, final: 94, bonus: 3, letter: 'A', status: 'Honors' },
-      { id: 'ENR-8', student_id: 'S-1008', student_name: 'Omar Ali', section: 'SEC-105', course: 'Microeconomics', semester: '2025 Fall', midterm: 71, final: 78, bonus: 2, letter: 'B-', status: 'Coaching' },
-      { id: 'ENR-9', student_id: 'S-1009', student_name: 'Jules Laurent', section: 'SEC-107', course: 'Managerial Finance', semester: '2025 Fall', midterm: 66, final: 70, bonus: 0, letter: 'C+', status: 'Watch' },
-      { id: 'ENR-10', student_id: 'S-1010', student_name: 'Sara Ito', section: 'SEC-104', course: 'Genetics', semester: '2025 Summer', midterm: 89, final: 88, bonus: 2, letter: 'A-', status: 'Dean list' }
-    ];
+  <div x-cloak x-show="toast.visible" x-transition class="fixed top-4 right-4 z-50 w-full max-w-sm rounded-xl border px-4 py-3 shadow-lg" :class="toast.variant === 'success' ? 'border-emerald-200 bg-emerald-50/90 text-emerald-800' : 'border-rose-200 bg-rose-50/90 text-rose-700'" role="status" aria-live="polite">
+    <div class="flex items-start gap-3">
+      <span class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full" :class="toast.variant === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <template x-if="toast.variant === 'success'"><path d="M5.25 12.75 9 16.5l9-9" stroke-linecap="round" stroke-linejoin="round" /></template>
+          <template x-if="toast.variant !== 'success'"><path d="M15 9 9 15m0-6 6 6" stroke-linecap="round" stroke-linejoin="round" /></template>
+        </svg>
+      </span>
+      <div>
+        <p class="text-sm font-semibold" x-text="toast.message"></p>
+        <p class="text-xs text-slate-500" x-text="toast.detail"></p>
+      </div>
+      <button type="button" class="ml-auto text-xs font-medium text-slate-500 hover:text-slate-700" @click="toast.visible = false">Dismiss</button>
+    </div>
+  </div>
 
+  <div x-cloak x-show="modalOpen" class="fixed inset-0 z-40 flex items-center justify-center px-4 py-6" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-slate-900/40" @click="closeModal()"></div>
+    <div class="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl" x-trap.noscroll="modalOpen" x-transition>
+      <header class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-slate-400" x-text="isEditing ? 'Update enrollment' : 'Create enrollment'"></p>
+          <h2 class="text-2xl font-semibold text-slate-900" x-text="isEditing ? 'Edit enrollment' : 'Add new enrollment'"></h2>
+        </div>
+        <button type="button" class="rounded-lg border border-transparent p-2 text-slate-400 hover:text-slate-600" @click="closeModal()" aria-label="Close dialog">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 9l6 6m0-6-6 6" stroke-linecap="round" /></svg>
+        </button>
+      </header>
+
+      <form class="mt-6 space-y-5" @submit.prevent="saveEnrollment()">
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="enrollment-student" class="text-sm font-medium text-slate-700">Student</label>
+            <select id="enrollment-student" x-model="form.student_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.student_id ? 'border-rose-300' : 'border-slate-200'" required>
+              <option value="" disabled>Select student</option>
+              <template x-for="student in studentOptions" :key="student._id">
+                <option :value="student._id" x-text="`${student.full_name} (${student._id})`"></option>
+              </template>
+            </select>
+            <p class="mt-1 text-xs text-slate-500" x-show="!studentOptions.length">Load students from the roster to enable selection.</p>
+            <p x-show="errors.student_id" x-text="errors.student_id" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+          <div>
+            <label for="enrollment-section" class="text-sm font-medium text-slate-700">Section</label>
+            <select id="enrollment-section" x-model="form.section_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.section_id ? 'border-rose-300' : 'border-slate-200'" required @change="syncSemester()">
+              <option value="" disabled>Select section</option>
+              <template x-for="section in sectionOptions" :key="section._id">
+                <option :value="section._id" x-text="section.label"></option>
+              </template>
+            </select>
+            <p class="mt-1 text-xs text-slate-500" x-show="currentSectionInfo" x-text="currentSectionInfo"></p>
+            <p x-show="errors.section_id" x-text="errors.section_id" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+        </div>
+
+        <div class="grid gap-5 sm:grid-cols-3">
+          <div>
+            <label for="enrollment-semester" class="text-sm font-medium text-slate-700">Semester</label>
+            <input id="enrollment-semester" type="text" x-model="form.semester" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.semester ? 'border-rose-300' : 'border-slate-200'" placeholder="2025A" required />
+            <p x-show="errors.semester" x-text="errors.semester" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+          <div>
+            <label for="enrollment-midterm" class="text-sm font-medium text-slate-700">Midterm</label>
+            <input id="enrollment-midterm" type="number" step="0.1" x-model.number="form.midterm" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.midterm ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. 88" />
+            <p x-show="errors.midterm" x-text="errors.midterm" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+          <div>
+            <label for="enrollment-final" class="text-sm font-medium text-slate-700">Final</label>
+            <input id="enrollment-final" type="number" step="0.1" x-model.number="form.final" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.final ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. 92" />
+            <p x-show="errors.final" x-text="errors.final" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+        </div>
+
+        <div class="grid gap-5 sm:grid-cols-3">
+          <div>
+            <label for="enrollment-bonus" class="text-sm font-medium text-slate-700">Bonus</label>
+            <input id="enrollment-bonus" type="number" step="0.1" x-model.number="form.bonus" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.bonus ? 'border-rose-300' : 'border-slate-200'" placeholder="Optional" />
+            <p x-show="errors.bonus" x-text="errors.bonus" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-700">Letter grade</label>
+            <div class="mt-1 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
+              <span x-text="form.letter || '—'"></span>
+              <span class="text-xs text-slate-500" x-text="currentLetterPreview ? `Preview: ${currentLetterPreview}` : 'Preview unavailable'" ></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:border-slate-300 disabled:opacity-50" @click="closeModal()" :disabled="saving">Cancel</button>
+          <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:opacity-50" :disabled="saving">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.25 12.75 9 16.5l9-9" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            <span x-text="saving ? 'Saving…' : 'Save enrollment'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
     document.addEventListener('alpine:init', () => {
       Alpine.data('enrollmentsPage', () => ({
-        enrollments: enrollmentSeed.map((record) => ({ ...record })),
+        enrollments: [],
+        students: [],
+        sections: [],
+        loading: true,
+        loadError: '',
         search: '',
         selectedSemester: '',
         selectedLetter: '',
+        modalOpen: false,
+        isEditing: false,
+        saving: false,
+        deletingId: '',
+        toastTimeout: null,
+        toast: { visible: false, message: '', detail: '', variant: 'success' },
+        form: {
+          _id: '',
+          student_id: '',
+          section_id: '',
+          semester: '',
+          midterm: '',
+          final: '',
+          bonus: '',
+          letter: ''
+        },
+        errors: {},
+        get studentOptions() {
+          return [...this.students].sort((a, b) => a.full_name.localeCompare(b.full_name));
+        },
+        get sectionOptions() {
+          return [...this.sections].sort((a, b) => a.label.localeCompare(b.label));
+        },
+        get sectionMap() {
+          return this.sections.reduce((acc, section) => {
+            acc[section._id] = section;
+            return acc;
+          }, {});
+        },
         get semesters() {
-          return [...new Set(this.enrollments.map((record) => record.semester))];
+          return [...new Set(this.enrollments.map((record) => record.semester).filter(Boolean))].sort();
         },
         get letters() {
-          return [...new Set(this.enrollments.map((record) => record.letter))];
+          return [...new Set(this.enrollments.map((record) => record.letter).filter(Boolean))].sort();
         },
         get filteredEnrollments() {
           const term = this.search.trim().toLowerCase();
@@ -239,22 +404,333 @@
             const matchesSemester = this.selectedSemester ? record.semester === this.selectedSemester : true;
             const matchesLetter = this.selectedLetter ? record.letter === this.selectedLetter : true;
             const matchesSearch = term
-              ? [record.student_name, record.student_id, record.section, record.course].some((value) =>
-                  (value || '').toLowerCase().includes(term)
-                )
+              ? [record.student_name, record.student_id, record.section_label, record.course_title]
+                  .some((value) => String(value || '').toLowerCase().includes(term))
               : true;
             return matchesSemester && matchesLetter && matchesSearch;
           });
+        },
+        get currentSectionInfo() {
+          const section = this.sectionMap[this.form.section_id];
+          if (!section) return '';
+          const parts = [section.title];
+          if (section.semester) parts.push(section.semester);
+          if (section.section_no) parts.push(`Sec ${section.section_no}`);
+          return parts.join(' • ');
+        },
+        get currentLetterPreview() {
+          return this.calculateLetter(this.form.midterm, this.form.final, this.form.bonus);
+        },
+        init() {
+          this.loadData();
+        },
+        async loadData() {
+          this.loading = true;
+          this.loadError = '';
+          try {
+            const [enrollments, students, sections] = await Promise.all([
+              this.requestEnrollments(),
+              this.requestStudents().catch((error) => {
+                console.error('Failed to load students', error);
+                this.showToast('Unable to load student list.', 'error', 'Student dropdown may be incomplete.');
+                return [];
+              }),
+              this.requestSections().catch((error) => {
+                console.error('Failed to load sections', error);
+                this.showToast('Unable to load sections.', 'error', 'Section dropdown may be incomplete.');
+                return [];
+              })
+            ]);
+            this.enrollments = enrollments;
+            this.students = students;
+            this.sections = sections;
+          } catch (error) {
+            console.error('Failed to load enrollments', error);
+            this.enrollments = [];
+            this.loadError = error instanceof Error ? error.message : 'Please refresh and try again.';
+            this.showToast('Unable to load enrollments.', 'error', 'Check your network connection.');
+          } finally {
+            this.loading = false;
+          }
+        },
+        async requestEnrollments() {
+          const response = await fetch('/api/enrollments');
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !Array.isArray(payload)) {
+            const message = (payload && payload.error) || `Request failed with status ${response.status}`;
+            throw new Error(message);
+          }
+          return payload.map((record) => ({
+            _id: record._id ?? `${record.student_id}:${record.section_id}`,
+            student_id: record.student_id ?? '',
+            student_name: record.student_name ?? '',
+            section_id: record.section_id ?? '',
+            section_label: record.section_no ? `${record.section_id} · Sec ${record.section_no}` : record.section_id ?? '',
+            course_title: record.course_title ?? '',
+            semester: record.semester ?? '',
+            midterm: record.midterm != null ? Number(record.midterm) : '',
+            final: record.final != null ? Number(record.final) : '',
+            bonus: record.bonus != null ? Number(record.bonus) : '',
+            letter: record.letter ?? ''
+          }));
+        },
+        async requestStudents() {
+          const response = await fetch('/api/students?limit=500');
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !Array.isArray(payload)) {
+            const message = (payload && payload.error) || `Request failed with status ${response.status}`;
+            throw new Error(message);
+          }
+          return payload.map((student) => ({
+            _id: student._id ?? '',
+            full_name: student.full_name ?? student._id ?? ''
+          }));
+        },
+        async requestSections() {
+          const response = await fetch('/api/sections');
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !Array.isArray(payload)) {
+            const message = (payload && payload.error) || `Request failed with status ${response.status}`;
+            throw new Error(message);
+          }
+          return payload.map((section) => ({
+            _id: section._id ?? '',
+            title: section.course_title ?? section.course_id ?? '',
+            semester: section.semester ?? '',
+            section_no: section.section_no ?? '',
+            label: section.course_title
+              ? `${section.course_title} (${section._id})`
+              : section._id ?? ''
+          }));
+        },
+        async refreshEnrollments() {
+          this.enrollments = await this.requestEnrollments();
+        },
+        openCreate() {
+          this.isEditing = false;
+          this.form = {
+            _id: '',
+            student_id: '',
+            section_id: '',
+            semester: '',
+            midterm: '',
+            final: '',
+            bonus: '',
+            letter: ''
+          };
+          this.errors = {};
+          this.saving = false;
+          this.modalOpen = true;
+        },
+        openEdit(record) {
+          this.isEditing = true;
+          this.form = {
+            _id: record._id,
+            student_id: record.student_id,
+            section_id: record.section_id,
+            semester: record.semester,
+            midterm: record.midterm === '' ? '' : Number(record.midterm),
+            final: record.final === '' ? '' : Number(record.final),
+            bonus: record.bonus === '' ? '' : Number(record.bonus),
+            letter: record.letter || ''
+          };
+          this.errors = {};
+          this.saving = false;
+          this.modalOpen = true;
+        },
+        closeModal() {
+          if (this.saving) return;
+          this.modalOpen = false;
+          this.form = {
+            _id: '',
+            student_id: '',
+            section_id: '',
+            semester: '',
+            midterm: '',
+            final: '',
+            bonus: '',
+            letter: ''
+          };
+          this.errors = {};
+        },
+        syncSemester() {
+          const section = this.sectionMap[this.form.section_id];
+          if (section && section.semester) {
+            this.form.semester = section.semester;
+          }
+        },
+        validate() {
+          const nextErrors = {};
+          if (!this.form.student_id) nextErrors.student_id = 'Select a student.';
+          if (!this.form.section_id) nextErrors.section_id = 'Select a section.';
+          if (!this.form.semester.trim()) nextErrors.semester = 'Semester is required.';
+          if (this.form.midterm !== '' && Number.isNaN(Number(this.form.midterm))) {
+            nextErrors.midterm = 'Midterm must be a number.';
+          }
+          if (this.form.final !== '' && Number.isNaN(Number(this.form.final))) {
+            nextErrors.final = 'Final must be a number.';
+          }
+          if (this.form.bonus !== '' && Number.isNaN(Number(this.form.bonus))) {
+            nextErrors.bonus = 'Bonus must be a number.';
+          }
+          this.errors = nextErrors;
+          return Object.keys(nextErrors).length === 0;
+        },
+        buildPayload() {
+          const payload = {
+            student_id: this.form.student_id,
+            section_id: this.form.section_id,
+            semester: this.form.semester.trim().toUpperCase(),
+            midterm: this.form.midterm === '' ? null : Number(this.form.midterm),
+            final: this.form.final === '' ? null : Number(this.form.final),
+            bonus: this.form.bonus === '' ? null : Number(this.form.bonus)
+          };
+          return payload;
+        },
+        async saveEnrollment() {
+          if (!this.validate()) {
+            this.showToast('Please review the highlighted fields.', 'error', 'Missing required information.');
+            return;
+          }
+
+          this.saving = true;
+          const payload = this.buildPayload();
+          const method = this.isEditing ? 'PUT' : 'POST';
+          const url = this.isEditing
+            ? `/api/enrollments/${encodeURIComponent(this.form._id)}`
+            : '/api/enrollments';
+
+          try {
+            const response = await fetch(url, {
+              method,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const result = await response.json().catch(() => null);
+
+            if (!response.ok || !result) {
+              const details = (result && result.details) || {};
+              this.errors = details;
+              const detailMessage =
+                details.student_id ||
+                details.section_id ||
+                details.semester ||
+                Object.values(details)[0] || '';
+              this.showToast((result && result.error) || 'Unable to save enrollment.', 'error', detailMessage);
+              return;
+            }
+
+            await this.refreshEnrollments();
+            this.closeModal();
+            this.showToast(
+              this.isEditing ? 'Enrollment updated successfully.' : 'Enrollment created successfully.',
+              'success',
+              result.letter ? `Assigned letter grade: ${result.letter}` : ''
+            );
+          } catch (error) {
+            console.error('Failed to save enrollment', error);
+            this.showToast('Unable to save enrollment.', 'error', 'Check your network connection.');
+          } finally {
+            this.saving = false;
+          }
+        },
+        async deleteEnrollment(id) {
+          if (!window.confirm('Remove this enrollment record?')) {
+            return;
+          }
+
+          this.deletingId = id;
+          try {
+            const response = await fetch(`/api/enrollments/${encodeURIComponent(id)}`, {
+              method: 'DELETE'
+            });
+            const result = await response.json().catch(() => null);
+
+            if (!response.ok || !result || !result.deleted) {
+              this.showToast(
+                (result && result.error) || 'Unable to delete enrollment.',
+                'error',
+                'Please try again in a moment.'
+              );
+              return;
+            }
+
+            this.enrollments = this.enrollments.filter((record) => record._id !== id);
+            this.showToast('Enrollment removed.', 'success', 'Student no longer appears in this section.');
+          } catch (error) {
+            console.error('Failed to delete enrollment', error);
+            this.showToast('Unable to delete enrollment.', 'error', 'Check your network connection.');
+          } finally {
+            this.deletingId = '';
+          }
         },
         badgeClass(letter) {
           const palette = {
             A: 'bg-emerald-100 text-emerald-700',
             'A-': 'bg-emerald-50 text-emerald-700',
-            B: 'bg-sky-100 text-sky-700',
-            'B-': 'bg-sky-50 text-sky-700',
-            'C+': 'bg-amber-100 text-amber-800'
+            'B+': 'bg-sky-100 text-sky-700',
+            B: 'bg-sky-50 text-sky-700',
+            'B-': 'bg-blue-50 text-blue-700',
+            'C+': 'bg-amber-100 text-amber-800',
+            C: 'bg-amber-50 text-amber-700',
+            'D+': 'bg-rose-100 text-rose-700',
+            D: 'bg-rose-50 text-rose-700',
+            F: 'bg-rose-100 text-rose-700'
           };
           return palette[letter] || 'bg-slate-100 text-slate-700';
+        },
+        letterStatus(letter) {
+          if (!letter) return 'Pending';
+          if (letter.startsWith('A')) return 'Honors';
+          if (letter.startsWith('B')) return 'On track';
+          if (letter.startsWith('C')) return 'Watch';
+          if (letter.startsWith('D')) return 'At risk';
+          if (letter === 'F') return 'Failing';
+          return 'Recorded';
+        },
+        formatScore(value) {
+          if (value === '' || value === null || Number.isNaN(value)) return '—';
+          const numberValue = Number(value);
+          return Number.isInteger(numberValue) ? numberValue : numberValue.toFixed(1);
+        },
+        calculateLetter(midterm, final, bonus) {
+          const mid = midterm === '' || midterm === null ? null : Number(midterm);
+          const fin = final === '' || final === null ? null : Number(final);
+          const extra = bonus === '' || bonus === null ? 0 : Number(bonus);
+          const scores = [];
+          if (mid != null && !Number.isNaN(mid)) scores.push({ score: mid, weight: 0.4 });
+          if (fin != null && !Number.isNaN(fin)) scores.push({ score: fin, weight: 0.6 });
+          if (!scores.length) return '';
+          let totalWeight = scores.reduce((sum, entry) => sum + entry.weight, 0);
+          if (totalWeight === 0) return '';
+          let weighted = scores.reduce((sum, entry) => sum + entry.score * entry.weight, 0) / totalWeight;
+          weighted = Math.max(0, Math.min(100, weighted + extra));
+          const scale = [
+            { min: 97, grade: 'A+' },
+            { min: 93, grade: 'A' },
+            { min: 90, grade: 'A-' },
+            { min: 87, grade: 'B+' },
+            { min: 83, grade: 'B' },
+            { min: 80, grade: 'B-' },
+            { min: 77, grade: 'C+' },
+            { min: 73, grade: 'C' },
+            { min: 70, grade: 'C-' },
+            { min: 67, grade: 'D+' },
+            { min: 63, grade: 'D' },
+            { min: 60, grade: 'D-' },
+            { min: 0, grade: 'F' }
+          ];
+          const match = scale.find((entry) => weighted >= entry.min);
+          return match ? match.grade : '';
+        },
+        showToast(message, variant = 'success', detail = '') {
+          if (this.toastTimeout) {
+            clearTimeout(this.toastTimeout);
+          }
+          this.toast = { visible: true, message, variant, detail };
+          this.toastTimeout = setTimeout(() => {
+            this.toast.visible = false;
+          }, 3200);
         }
       }));
     });

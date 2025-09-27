@@ -92,7 +92,7 @@
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.25 7.5h13.5" stroke-linecap="round" /><path d="M5.25 12h13.5" stroke-linecap="round" /><path d="M5.25 16.5h13.5" stroke-linecap="round" /></svg>
                 Export plan
               </button>
-              <button type="button" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
                 New section
               </button>
@@ -102,117 +102,538 @@
           <section class="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div class="grid gap-4 md:grid-cols-3">
               <div class="md:col-span-2">
-                <label for="section-search" class="text-sm font-medium text-slate-700">Search sections</label>
+                <label for="section-course-filter" class="text-sm font-medium text-slate-700">Course</label>
                 <div class="mt-1 relative">
                   <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="6" /><path d="m17 17 3.5 3.5" stroke-linecap="round" /></svg>
                   </span>
-                  <input id="section-search" type="search" x-model="search" placeholder="Search by course, instructor, or room" class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
+                  <input id="section-course-filter" type="search" x-model="courseFilter" placeholder="Search by course title or ID" class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
                 </div>
+                <p class="mt-2 text-xs text-slate-500">Filter sections by matching course title or catalog ID.</p>
               </div>
               <div>
                 <label for="semester-filter" class="text-sm font-medium text-slate-700">Semester</label>
                 <select id="semester-filter" x-model="selectedSemester" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
                   <option value="">All semesters</option>
                   <template x-for="semester in semesters" :key="semester">
-                    <option x-text="semester"></option>
+                    <option :value="semester" x-text="semester"></option>
                   </template>
                 </select>
               </div>
             </div>
 
-            <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200">
-              <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 text-left text-sm table-sticky-header">
-                  <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
-                    <tr>
-                      <th scope="col" class="px-4 py-3 font-semibold">Section</th>
-                      <th scope="col" class="px-4 py-3 font-semibold">Course</th>
-                      <th scope="col" class="px-4 py-3 font-semibold">Semester</th>
-                      <th scope="col" class="px-4 py-3 font-semibold">Instructor</th>
-                      <th scope="col" class="px-4 py-3 font-semibold">Capacity</th>
-                      <th scope="col" class="px-4 py-3 font-semibold">Room</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-slate-100 bg-white">
-                    <template x-for="section in filteredSections" :key="section.id">
-                      <tr class="hover:bg-slate-50">
-                        <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="section.id"></td>
-                        <td class="px-4 py-3">
-                          <div class="font-medium text-slate-900" x-text="section.course_title"></div>
-                          <p class="text-xs text-slate-500" x-text="section.course_id"></p>
-                        </td>
-                        <td class="px-4 py-3">
-                          <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700">
-                            <span class="h-2 w-2 rounded-full bg-slate-400"></span>
-                            <span x-text="section.semester"></span>
-                          </span>
-                        </td>
-                        <td class="px-4 py-3">
-                          <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
-                            <svg class="h-3.5 w-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" stroke-linecap="round" /></svg>
-                            <span x-text="section.instructor"></span>
-                          </span>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-slate-700">
-                          <div class="font-semibold" x-text="`${section.enrolled}/${section.capacity}`"></div>
-                          <p class="text-xs text-slate-500" x-text="section.waitlist ? `${section.waitlist} waitlisted` : 'No waitlist'"></p>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-slate-700" x-text="section.room"></td>
-                      </tr>
-                    </template>
-                  </tbody>
-                </table>
+            <div class="mt-6">
+              <div x-cloak x-show="loadError" x-transition class="rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700" role="alert">
+                <p class="font-medium">Unable to load sections.</p>
+                <p class="mt-1 text-rose-600" x-text="loadError"></p>
               </div>
-            </div>
 
-            <template x-if="filteredSections.length === 0">
-              <div class="mt-6 flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 py-12 text-center">
-                <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
-                  <svg class="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7.5 4.5h9L21 12l-4.5 7.5h-9L3 12 7.5 4.5Z" /><path d="M12 9v6" stroke-linecap="round" /><path d="M9 12h6" stroke-linecap="round" /></svg>
-                </span>
-                <div>
-                  <h3 class="text-lg font-semibold text-slate-900">No sections scheduled</h3>
-                  <p class="mt-1 text-sm text-slate-500">Adjust search filters or create a new section to fill the gap.</p>
+              <template x-if="loading">
+                <div class="overflow-hidden rounded-2xl border border-slate-200">
+                  <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200 text-left text-sm table-sticky-header">
+                      <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                        <tr>
+                          <th scope="col" class="px-4 py-3 font-semibold">Section</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Course</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Semester</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Instructor</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Capacity</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Room</th>
+                          <th scope="col" class="px-4 py-3 font-semibold text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 bg-white">
+                        <template x-for="i in 5" :key="i">
+                          <tr>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-24 rounded"></span></td>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-40 rounded"></span></td>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-20 rounded"></span></td>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-32 rounded"></span></td>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-16 rounded"></span></td>
+                            <td class="px-4 py-3"><span class="skeleton-line h-4 w-20 rounded"></span></td>
+                            <td class="px-4 py-3 text-right"><span class="skeleton-line h-4 w-24 rounded ml-auto block"></span></td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            </template>
+              </template>
+
+              <template x-if="!loading && !loadError && filteredSections.length">
+                <div class="overflow-hidden rounded-2xl border border-slate-200">
+                  <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200 text-left text-sm table-sticky-header">
+                      <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                        <tr>
+                          <th scope="col" class="px-4 py-3 font-semibold">Section</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Course</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Semester</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Instructor</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Capacity</th>
+                          <th scope="col" class="px-4 py-3 font-semibold">Room</th>
+                          <th scope="col" class="px-4 py-3 font-semibold text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-slate-100 bg-white">
+                        <template x-for="section in filteredSections" :key="section._id">
+                          <tr class="hover:bg-slate-50">
+                            <td class="px-4 py-3">
+                              <div class="font-mono text-xs font-medium text-slate-600" x-text="section._id"></div>
+                              <p class="text-xs text-slate-500" x-show="section.section_no" x-text="`Sec ${section.section_no}`"></p>
+                            </td>
+                            <td class="px-4 py-3">
+                              <div class="font-medium text-slate-900" x-text="section.course_title || courseMap[section.course_id] || section.course_id"></div>
+                              <p class="text-xs text-slate-500" x-text="section.course_id"></p>
+                            </td>
+                            <td class="px-4 py-3">
+                              <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700">
+                                <span class="h-2 w-2 rounded-full bg-slate-400"></span>
+                                <span x-text="section.semester"></span>
+                              </span>
+                            </td>
+                            <td class="px-4 py-3">
+                              <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
+                                <svg class="h-3.5 w-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" stroke-linecap="round" /></svg>
+                                <span x-text="section.instructor_id || '—'"></span>
+                              </span>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-slate-700">
+                              <div class="font-semibold" x-text="section.capacity != null ? section.capacity : '—'"></div>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-slate-700">
+                              <div x-text="section.room || '—'"></div>
+                              <p class="text-xs text-slate-500" x-show="section.schedule && section.schedule.length" x-text="section.schedule.join(', ')"></p>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                              <div class="inline-flex items-center gap-2">
+                                <button type="button" @click="openEdit(section)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900">
+                                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4.5 19.5 3.75-.938a2 2 0 0 0 .938-.52l9.02-9.02a1.5 1.5 0 0 0-2.121-2.122l-9.02 9.02a2 2 0 0 0-.52.938L4.5 19.5Z" /><path d="M14.25 6.75 17.25 9.75" /></svg>
+                                  Edit
+                                </button>
+                                <button type="button" @click="deleteSection(section._id)" :disabled="deletingId === section._id" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50">
+                                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 7.5h10.5" stroke-linecap="round" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M8.25 7.5V18a1.5 1.5 0 0 0 1.5 1.5h4.5A1.5 1.5 0 0 0 15.75 18V7.5" /></svg>
+                                  <span x-text="deletingId === section._id ? 'Removing…' : 'Delete'"></span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </template>
+
+              <template x-if="!loading && !loadError && filteredSections.length === 0">
+                <div class="mt-6 flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 py-12 text-center">
+                  <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
+                    <svg class="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7.5 4.5h9L21 12l-4.5 7.5h-9L3 12 7.5 4.5Z" /><path d="M12 9v6" stroke-linecap="round" /><path d="M9 12h6" stroke-linecap="round" /></svg>
+                  </span>
+                  <div>
+                    <h3 class="text-lg font-semibold text-slate-900">No sections scheduled</h3>
+                    <p class="mt-1 text-sm text-slate-500">Adjust filters or create a new section to fill the gap.</p>
+                  </div>
+                </div>
+              </template>
+            </div>
           </section>
         </div>
       </main>
     </div>
   </div>
 
-  <script>
-    const sectionSeed = [
-      { id: 'SEC-101', course_id: 'CIS-210', course_title: 'Data Structures', semester: '2025 Spring', instructor: 'Dr. Maya Li', capacity: 32, enrolled: 29, waitlist: 2, room: 'ENG 210' },
-      { id: 'SEC-102', course_id: 'CIS-330', course_title: 'Operating Systems', semester: '2025 Spring', instructor: 'Prof. Victor Tan', capacity: 28, enrolled: 27, waitlist: 0, room: 'CS 301' },
-      { id: 'SEC-103', course_id: 'MTH-240', course_title: 'Linear Algebra', semester: '2025 Spring', instructor: 'Dr. Ana Gomez', capacity: 30, enrolled: 30, waitlist: 4, room: 'SCI 112' },
-      { id: 'SEC-104', course_id: 'BIO-120', course_title: 'Genetics', semester: '2025 Summer', instructor: 'Dr. Leah Bennett', capacity: 24, enrolled: 20, waitlist: 0, room: 'BIO 220' },
-      { id: 'SEC-105', course_id: 'ECON-201', course_title: 'Microeconomics', semester: '2025 Fall', instructor: 'Dr. Omar Haddad', capacity: 40, enrolled: 36, waitlist: 3, room: 'BUS 105' },
-      { id: 'SEC-106', course_id: 'PHYS-330', course_title: 'Quantum Mechanics', semester: '2025 Fall', instructor: 'Prof. Helena Ruiz', capacity: 22, enrolled: 18, waitlist: 0, room: 'PHY 410' },
-      { id: 'SEC-107', course_id: 'BUS-210', course_title: 'Managerial Finance', semester: '2025 Fall', instructor: 'Dr. Daniel Ortiz', capacity: 35, enrolled: 31, waitlist: 1, room: 'BUS 204' }
-    ];
+  <div x-cloak x-show="toast.visible" x-transition class="fixed top-4 right-4 z-50 w-full max-w-sm rounded-xl border px-4 py-3 shadow-lg" :class="toast.variant === 'success' ? 'border-emerald-200 bg-emerald-50/90 text-emerald-800' : 'border-rose-200 bg-rose-50/90 text-rose-700'" role="status" aria-live="polite">
+    <div class="flex items-start gap-3">
+      <span class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full" :class="toast.variant === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <template x-if="toast.variant === 'success'"><path d="M5.25 12.75 9 16.5l9-9" stroke-linecap="round" stroke-linejoin="round" /></template>
+          <template x-if="toast.variant !== 'success'"><path d="M15 9 9 15m0-6 6 6" stroke-linecap="round" stroke-linejoin="round" /></template>
+        </svg>
+      </span>
+      <div>
+        <p class="text-sm font-semibold" x-text="toast.message"></p>
+        <p class="text-xs text-slate-500" x-text="toast.detail"></p>
+      </div>
+      <button type="button" class="ml-auto text-xs font-medium text-slate-500 hover:text-slate-700" @click="toast.visible = false">Dismiss</button>
+    </div>
+  </div>
 
+  <div x-cloak x-show="modalOpen" class="fixed inset-0 z-40 flex items-center justify-center px-4 py-6" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-slate-900/40" @click="closeModal()"></div>
+    <div class="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl" x-trap.noscroll="modalOpen" x-transition>
+      <header class="flex items-start justify-between gap-3">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-slate-400" x-text="isEditing ? 'Update section' : 'Create section'"></p>
+          <h2 class="text-2xl font-semibold text-slate-900" x-text="isEditing ? 'Edit section' : 'Add new section'"></h2>
+        </div>
+        <button type="button" class="rounded-lg border border-transparent p-2 text-slate-400 hover:text-slate-600" @click="closeModal()" aria-label="Close dialog">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 9l6 6m0-6-6 6" stroke-linecap="round" /></svg>
+        </button>
+      </header>
+
+      <form class="mt-6 space-y-5" @submit.prevent="saveSection()">
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="section-id" class="text-sm font-medium text-slate-700">Section ID</label>
+            <input id="section-id" type="text" x-model="form._id" :disabled="isEditing" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:bg-slate-50" :class="errors._id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. SEC-CS101-2025A-01" required />
+            <p class="mt-1 text-xs text-slate-500">Use the registrar-friendly identifier.</p>
+            <p x-show="errors._id" x-text="errors._id" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+          <div>
+            <label for="section-course" class="text-sm font-medium text-slate-700">Course</label>
+            <select id="section-course" x-model="form.course_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.course_id ? 'border-rose-300' : 'border-slate-200'" required>
+              <option value="" disabled>Select course</option>
+              <template x-for="course in courseOptions" :key="course._id">
+                <option :value="course._id" x-text="`${course.title} (${course._id})`"></option>
+              </template>
+            </select>
+            <p class="mt-1 text-xs text-slate-500" x-show="!courseOptions.length">No courses available yet — create a course first.</p>
+            <p x-show="errors.course_id" x-text="errors.course_id" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+        </div>
+
+        <div class="grid gap-5 sm:grid-cols-3">
+          <div>
+            <label for="section-semester" class="text-sm font-medium text-slate-700">Semester</label>
+            <input id="section-semester" type="text" x-model="form.semester" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.semester ? 'border-rose-300' : 'border-slate-200'" placeholder="2025A" required />
+            <p x-show="errors.semester" x-text="errors.semester" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+          <div>
+            <label for="section-number" class="text-sm font-medium text-slate-700">Section number</label>
+            <input id="section-number" type="text" x-model="form.section_no" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.section_no ? 'border-rose-300' : 'border-slate-200'" placeholder="01" required />
+            <p x-show="errors.section_no" x-text="errors.section_no" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+          <div>
+            <label for="section-capacity" class="text-sm font-medium text-slate-700">Capacity</label>
+            <input id="section-capacity" type="number" min="0" step="1" x-model.number="form.capacity" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.capacity ? 'border-rose-300' : 'border-slate-200'" placeholder="30" required />
+            <p x-show="errors.capacity" x-text="errors.capacity" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+        </div>
+
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label for="section-instructor" class="text-sm font-medium text-slate-700">Instructor ID</label>
+            <input id="section-instructor" type="text" x-model="form.instructor_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.instructor_id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. I-1001" required />
+            <p x-show="errors.instructor_id" x-text="errors.instructor_id" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+          <div>
+            <label for="section-room" class="text-sm font-medium text-slate-700">Room</label>
+            <input id="section-room" type="text" x-model="form.room" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.room ? 'border-rose-300' : 'border-slate-200'" placeholder="ENG-201" required />
+            <p x-show="errors.room" x-text="errors.room" class="mt-1 text-xs font-medium text-rose-600"></p>
+          </div>
+        </div>
+
+        <div>
+          <label for="section-schedule" class="text-sm font-medium text-slate-700">Meeting pattern</label>
+          <textarea id="section-schedule" rows="3" x-model="form.schedule_text" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" placeholder="Mon 09:00-10:15&#10;Wed 09:00-10:15"></textarea>
+          <p class="mt-1 text-xs text-slate-500">Enter one meeting per line. Leave blank if the schedule is not finalized.</p>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:border-slate-300 disabled:opacity-50" @click="closeModal()" :disabled="saving">Cancel</button>
+          <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:opacity-50" :disabled="saving">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.25 12.75 9 16.5l9-9" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            <span x-text="saving ? 'Saving…' : 'Save section'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
     document.addEventListener('alpine:init', () => {
       Alpine.data('sectionsPage', () => ({
-        sections: sectionSeed.map((section) => ({ ...section })),
-        search: '',
+        sections: [],
+        courses: [],
+        loading: true,
+        loadError: '',
+        courseFilter: '',
         selectedSemester: '',
+        modalOpen: false,
+        isEditing: false,
+        saving: false,
+        deletingId: '',
+        toastTimeout: null,
+        toast: { visible: false, message: '', detail: '', variant: 'success' },
+        form: {
+          _id: '',
+          course_id: '',
+          semester: '',
+          section_no: '',
+          instructor_id: '',
+          capacity: '',
+          room: '',
+          schedule_text: ''
+        },
+        errors: {},
+        get courseOptions() {
+          return [...this.courses].sort((a, b) => a.title.localeCompare(b.title));
+        },
+        get courseMap() {
+          return this.courses.reduce((acc, course) => {
+            acc[course._id] = course.title;
+            return acc;
+          }, {});
+        },
         get semesters() {
-          return [...new Set(this.sections.map((section) => section.semester))];
+          return [...new Set(this.sections.map((section) => section.semester).filter(Boolean))].sort();
         },
         get filteredSections() {
-          const term = this.search.trim().toLowerCase();
+          const term = this.courseFilter.trim().toLowerCase();
           return this.sections.filter((section) => {
             const matchesSemester = this.selectedSemester ? section.semester === this.selectedSemester : true;
-            const matchesSearch = term
-              ? [section.course_title, section.course_id, section.instructor, section.room].some((value) =>
-                  (value || '').toLowerCase().includes(term)
-                )
+            const matchesCourse = term
+              ? [section.course_title, section.course_id]
+                  .some((value) => String(value || '').toLowerCase().includes(term))
               : true;
-            return matchesSemester && matchesSearch;
+            return matchesSemester && matchesCourse;
           });
+        },
+        init() {
+          this.loadData();
+        },
+        async loadData() {
+          this.loading = true;
+          this.loadError = '';
+          try {
+            const [sections, courses] = await Promise.all([
+              this.requestSections(),
+              this.requestCourses().catch((error) => {
+                console.error('Failed to load courses', error);
+                this.showToast('Unable to load course catalog.', 'error', 'Course dropdown may be incomplete.');
+                return [];
+              })
+            ]);
+            this.sections = sections;
+            this.courses = courses;
+          } catch (error) {
+            console.error('Failed to load sections', error);
+            this.sections = [];
+            this.courses = [];
+            this.loadError = error instanceof Error ? error.message : 'Please refresh and try again.';
+            this.showToast('Unable to load sections.', 'error', 'Check your network connection.');
+          } finally {
+            this.loading = false;
+          }
+        },
+        async requestSections() {
+          const response = await fetch('/api/sections');
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !Array.isArray(payload)) {
+            const message = (payload && payload.error) || `Request failed with status ${response.status}`;
+            throw new Error(message);
+          }
+          return payload.map((section) => ({
+            _id: section._id ?? '',
+            course_id: section.course_id ?? '',
+            course_title: section.course_title ?? '',
+            semester: section.semester ?? '',
+            section_no: section.section_no ?? '',
+            instructor_id: section.instructor_id ?? '',
+            capacity: section.capacity != null ? Number(section.capacity) : null,
+            room: section.room ?? '',
+            schedule: Array.isArray(section.schedule) ? section.schedule : []
+          }));
+        },
+        async requestCourses() {
+          const response = await fetch('/api/courses?limit=500');
+          const payload = await response.json().catch(() => null);
+          if (!response.ok || !Array.isArray(payload)) {
+            const message = (payload && payload.error) || `Request failed with status ${response.status}`;
+            throw new Error(message);
+          }
+          return payload.map((course) => ({
+            _id: course._id ?? '',
+            title: course.title ?? course._id ?? ''
+          }));
+        },
+        async refreshSections() {
+          this.sections = await this.requestSections();
+        },
+        async refreshCoursesIfNeeded(courseId) {
+          if (!courseId) return;
+          const exists = this.courses.some((course) => course._id === courseId);
+          if (!exists) {
+            try {
+              this.courses = await this.requestCourses();
+            } catch (error) {
+              console.error('Failed to refresh courses', error);
+            }
+          }
+        },
+        openCreate() {
+          this.isEditing = false;
+          this.form = {
+            _id: '',
+            course_id: '',
+            semester: '',
+            section_no: '',
+            instructor_id: '',
+            capacity: '',
+            room: '',
+            schedule_text: ''
+          };
+          this.errors = {};
+          this.saving = false;
+          this.modalOpen = true;
+        },
+        openEdit(section) {
+          this.isEditing = true;
+          this.form = {
+            _id: section._id,
+            course_id: section.course_id,
+            semester: section.semester,
+            section_no: section.section_no,
+            instructor_id: section.instructor_id,
+            capacity: section.capacity != null ? Number(section.capacity) : '',
+            room: section.room || '',
+            schedule_text: Array.isArray(section.schedule) ? section.schedule.join('\n') : ''
+          };
+          this.errors = {};
+          this.saving = false;
+          this.modalOpen = true;
+        },
+        closeModal() {
+          if (this.saving) return;
+          this.modalOpen = false;
+          this.form = {
+            _id: '',
+            course_id: '',
+            semester: '',
+            section_no: '',
+            instructor_id: '',
+            capacity: '',
+            room: '',
+            schedule_text: ''
+          };
+          this.errors = {};
+        },
+        validate() {
+          const nextErrors = {};
+          if (!this.form._id.trim()) nextErrors._id = 'Section ID is required.';
+          if (!this.form.course_id) nextErrors.course_id = 'Select a course.';
+          if (!this.form.semester.trim()) nextErrors.semester = 'Semester is required.';
+          if (!this.form.section_no.trim()) nextErrors.section_no = 'Section number is required.';
+          if (!this.form.instructor_id.trim()) nextErrors.instructor_id = 'Instructor ID is required.';
+          if (this.form.capacity === '' || Number.isNaN(Number(this.form.capacity)) || Number(this.form.capacity) < 0) {
+            nextErrors.capacity = 'Capacity must be zero or greater.';
+          }
+          if (!this.form.room.trim()) nextErrors.room = 'Room is required.';
+          this.errors = nextErrors;
+          return Object.keys(nextErrors).length === 0;
+        },
+        buildPayload() {
+          const scheduleEntries = this.form.schedule_text
+            .split('\n')
+            .map((line) => line.trim())
+            .filter((line) => line.length);
+          return {
+            _id: this.form._id.trim(),
+            course_id: this.form.course_id,
+            semester: this.form.semester.trim().toUpperCase(),
+            section_no: this.form.section_no.trim(),
+            instructor_id: this.form.instructor_id.trim(),
+            capacity: Number(this.form.capacity),
+            room: this.form.room.trim(),
+            schedule: scheduleEntries
+          };
+        },
+        async saveSection() {
+          if (!this.validate()) {
+            this.showToast('Please review the highlighted fields.', 'error', 'Missing required information.');
+            return;
+          }
+
+          this.saving = true;
+          const payload = this.buildPayload();
+          const method = this.isEditing ? 'PUT' : 'POST';
+          const url = this.isEditing
+            ? `/api/sections/${encodeURIComponent(this.form._id)}`
+            : '/api/sections';
+
+          if (this.isEditing) {
+            delete payload._id;
+          }
+
+          try {
+            const response = await fetch(url, {
+              method,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const result = await response.json().catch(() => null);
+
+            if (!response.ok || !result) {
+              const details = (result && result.details) || {};
+              this.errors = details;
+              const detailMessage =
+                details.course_id ||
+                details.section_no ||
+                details.semester ||
+                Object.values(details)[0] || '';
+              this.showToast((result && result.error) || 'Unable to save section.', 'error', detailMessage);
+              return;
+            }
+
+            await this.refreshSections();
+            await this.refreshCoursesIfNeeded(this.form.course_id);
+            this.closeModal();
+            this.showToast(
+              this.isEditing ? 'Section updated successfully.' : 'Section created successfully.',
+              'success',
+              this.isEditing ? 'Schedule refreshed.' : 'Section is ready for enrollment.'
+            );
+          } catch (error) {
+            console.error('Failed to save section', error);
+            this.showToast('Unable to save section.', 'error', 'Check your network connection.');
+          } finally {
+            this.saving = false;
+          }
+        },
+        async deleteSection(id) {
+          if (!window.confirm('Remove this section from the schedule?')) {
+            return;
+          }
+
+          this.deletingId = id;
+
+          try {
+            const response = await fetch(`/api/sections/${encodeURIComponent(id)}`, {
+              method: 'DELETE'
+            });
+            const result = await response.json().catch(() => null);
+
+            if (!response.ok || !result || !result.deleted) {
+              this.showToast(
+                (result && result.error) || 'Unable to delete section.',
+                'error',
+                'Please try again in a moment.'
+              );
+              return;
+            }
+
+            this.sections = this.sections.filter((section) => section._id !== id);
+            const detail = result.enrollments
+              ? `${result.enrollments} enrollment(s) may require reassignment.`
+              : 'Section removed from the schedule.';
+            this.showToast('Section removed.', 'success', detail);
+          } catch (error) {
+            console.error('Failed to delete section', error);
+            this.showToast('Unable to delete section.', 'error', 'Check your network connection.');
+          } finally {
+            this.deletingId = '';
+          }
+        },
+        showToast(message, variant = 'success', detail = '') {
+          if (this.toastTimeout) {
+            clearTimeout(this.toastTimeout);
+          }
+          this.toast = { visible: true, message, variant, detail };
+          this.toastTimeout = setTimeout(() => {
+            this.toast.visible = false;
+          }, 3200);
         }
       }));
     });
