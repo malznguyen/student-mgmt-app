@@ -184,8 +184,18 @@ def _ensure_enrollments_indexes(collection: Collection) -> None:
             background=True,
         ),
         IndexModel(
+            [("section_id", ASCENDING), ("semester", ASCENDING)],
+            name="section_semester",
+            background=True,
+        ),
+        IndexModel(
             [("student_id", ASCENDING), ("semester", ASCENDING)],
             name="student_semester",
+            background=True,
+        ),
+        IndexModel(
+            [("semester", ASCENDING)],
+            name="semester_idx",
             background=True,
         ),
         IndexModel(

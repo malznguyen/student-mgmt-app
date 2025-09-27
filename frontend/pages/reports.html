@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reports · Student Mgmt</title>
+  <link rel="stylesheet" href="../style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-700" x-data="{ sidebarOpen: false }" x-on:keydown.escape.window="sidebarOpen = false">
+  <div class="flex min-h-screen">
+    <div x-cloak x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-30 bg-slate-900/40 md:hidden" aria-hidden="true" @click="sidebarOpen = false"></div>
+    <aside x-cloak x-show="sidebarOpen" x-transition:enter="transition transform duration-200" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition transform duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 md:static md:translate-x-0 md:block">
+      <div class="flex items-center gap-3 px-6 h-16 border-b border-slate-100">
+        <img src="../assets/logo.svg" alt="Student Management logo" class="h-9 w-9" />
+        <div>
+          <p class="text-sm uppercase tracking-widest text-slate-400">Student Mgmt</p>
+          <p class="text-base font-semibold text-slate-800">Admin Console</p>
+        </div>
+      </div>
+      <nav class="px-4 py-6 space-y-1 text-sm font-medium">
+        <a href="/" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 9.75 12 3l9 6.75V21a.75.75 0 0 1-.75.75H3.75A.75.75 0 0 1 3 21V9.75Z" /><path d="M9 21v-6h6v6" stroke-linecap="round" /></svg>
+          </span>
+          Dashboard
+        </a>
+        <a href="/pages/students.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" stroke-linecap="round" /></svg>
+          </span>
+          Students
+        </a>
+        <a href="/pages/courses.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 5.25h15" stroke-linecap="round" /><path d="M6 4.5h12A1.5 1.5 0 0 1 19.5 6v13.5a.75.75 0 0 1-.75.75H5.25a.75.75 0 0 1-.75-.75V6A1.5 1.5 0 0 1 6 4.5Z" /><path d="M9 9h6m-6 4.5h6" stroke-linecap="round" /></svg>
+          </span>
+          Courses
+        </a>
+        <a href="/pages/sections.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 6.75h15" stroke-linecap="round" /><path d="M4.5 12h15" stroke-linecap="round" /><path d="M4.5 17.25h15" stroke-linecap="round" /></svg>
+          </span>
+          Sections
+        </a>
+        <a href="/pages/enrollments.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 4.5h15v15h-15z" /><path d="M8.25 8.25h7.5v7.5h-7.5z" /><path d="M8.25 4.5v3.75M15.75 4.5v3.75M4.5 12h3.75m7.5 0H19.5M8.25 16.5V19.5m7.5-3v3" stroke-linecap="round" /></svg>
+          </span>
+          Enrollments
+        </a>
+        <a href="/pages/reports.html" aria-current="page" class="flex items-center gap-3 rounded-xl px-3 py-2 bg-slate-900/5 text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 19.5 9 13.5l4.5 3 6-9" stroke-linecap="round" stroke-linejoin="round" /><path d="M3.75 5.25h16.5" stroke-linecap="round" /></svg>
+          </span>
+          Reports
+        </a>
+      </nav>
+      <div class="mt-auto px-6 py-6 border-t border-slate-100 text-xs text-slate-500">
+        <p>Academic year <span class="font-semibold text-slate-700">2025</span></p>
+        <p class="mt-1">Performance insights refreshed hourly</p>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-h-screen">
+      <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div class="flex items-center justify-between px-4 sm:px-6 h-16">
+          <div class="flex items-center gap-3">
+            <button type="button" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900 md:hidden" @click="sidebarOpen = true" aria-label="Open navigation menu">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 7.5h15M4.5 12h15M4.5 16.5h15" stroke-linecap="round" /></svg>
+            </button>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-slate-400">Analytics</p>
+              <h1 class="text-lg font-semibold text-slate-900">Reports</h1>
+            </div>
+          </div>
+          <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+            <a href="/" class="hover:text-slate-900">Dashboard</a>
+            <a href="/pages/students.html" class="hover:text-slate-900">Students</a>
+            <a href="/pages/courses.html" class="hover:text-slate-900">Courses</a>
+            <a href="/pages/sections.html" class="hover:text-slate-900">Sections</a>
+            <a href="/pages/enrollments.html" class="hover:text-slate-900">Enrollments</a>
+            <a href="/pages/reports.html" class="text-slate-900">Reports</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="flex-1">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="reportsPage()">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 class="text-3xl font-semibold text-slate-900">Performance intelligence</h2>
+              <p class="mt-2 text-slate-600">Surface cumulative GPAs, grade distributions, and enrollment exports backed by live MongoDB aggregations.</p>
+            </div>
+            <div class="flex flex-wrap gap-3 text-sm">
+              <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 font-medium text-slate-700 shadow-sm">
+                <svg class="h-4 w-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5.25v13.5" stroke-linecap="round" /><path d="M5.25 12h13.5" stroke-linecap="round" /></svg>
+                Updated from source grades
+              </span>
+              <span class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 font-semibold text-white shadow-smooth">
+                MongoDB Aggregations
+              </span>
+            </div>
+          </div>
+
+          <section class="mt-10 grid gap-6 lg:grid-cols-5">
+            <article class="lg:col-span-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <header class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 class="text-lg font-semibold text-slate-900">GPA lookup</h3>
+                  <p class="text-sm text-slate-500">Weighted GPA across enrolled course credits.</p>
+                </div>
+                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">4.0 scale</span>
+              </header>
+              <form class="mt-6 space-y-4" @submit.prevent="fetchGpa">
+                <div class="grid gap-4 sm:grid-cols-2">
+                  <label class="flex flex-col text-sm font-medium text-slate-600">
+                    Student ID
+                    <input type="text" x-model="gpaForm.student_id" class="mt-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" placeholder="e.g. S-1001" required />
+                  </label>
+                  <label class="flex flex-col text-sm font-medium text-slate-600">
+                    Semester <span class="text-xs font-normal text-slate-400">(optional)</span>
+                    <input type="text" x-model="gpaForm.semester" class="mt-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" placeholder="e.g. 2025A" />
+                  </label>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <p class="text-xs text-slate-500">Includes courses with assigned letter grades and credit hours.</p>
+                  <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:opacity-60" :disabled="gpaLoading">
+                    <svg x-show="!gpaLoading" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
+                    <svg x-show="gpaLoading" x-cloak class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9" stroke-opacity="0.25" /><path d="M21 12a9 9 0 0 0-9-9" stroke-linecap="round" /></svg>
+                    Lookup GPA
+                  </button>
+                </div>
+              </form>
+
+              <template x-if="gpaError">
+                <div x-cloak class="mt-4 rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700" role="alert">
+                  <p class="font-semibold">Unable to calculate GPA.</p>
+                  <p class="mt-1" x-text="gpaError"></p>
+                </div>
+              </template>
+
+              <template x-if="gpaResult">
+                <div x-cloak class="mt-6 space-y-6">
+                  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div class="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
+                      <p class="text-xs uppercase tracking-wide text-slate-400">Student</p>
+                      <p class="mt-2 text-sm font-semibold text-slate-800" x-text="gpaResult.student_id"></p>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
+                      <p class="text-xs uppercase tracking-wide text-slate-400">Semester</p>
+                      <p class="mt-2 text-sm font-semibold text-slate-800" x-text="gpaResult.semester || 'All terms'"></p>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
+                      <p class="text-xs uppercase tracking-wide text-slate-400">Total credits</p>
+                      <p class="mt-2 text-sm font-semibold text-slate-800" x-text="formatNumber(gpaResult.total_credits)"></p>
+                    </div>
+                    <div class="rounded-xl border border-slate-200 bg-emerald-50 px-4 py-3">
+                      <p class="text-xs uppercase tracking-wide text-emerald-600">GPA</p>
+                      <p class="mt-2 text-lg font-semibold text-emerald-700" x-text="formatDecimal(gpaResult.gpa)"></p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <header class="flex items-center justify-between text-sm font-medium text-slate-600">
+                      <p>Course breakdown</p>
+                      <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500" x-text="`${gpaResult.details.length} record${gpaResult.details.length === 1 ? '' : 's'}`"></span>
+                    </header>
+                    <template x-if="gpaResult.details.length">
+                      <div class="mt-3 overflow-hidden rounded-xl border border-slate-200">
+                        <table class="min-w-full divide-y divide-slate-200 text-sm">
+                          <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                            <tr>
+                              <th scope="col" class="px-4 py-2">Course</th>
+                              <th scope="col" class="px-4 py-2">Section</th>
+                              <th scope="col" class="px-4 py-2 text-right">Credits</th>
+                              <th scope="col" class="px-4 py-2 text-right">Letter</th>
+                            </tr>
+                          </thead>
+                          <tbody class="divide-y divide-slate-100 bg-white text-slate-700">
+                            <template x-for="row in gpaResult.details" :key="`${row.course_id}-${row.section_id}`">
+                              <tr>
+                                <td class="px-4 py-2 font-medium" x-text="row.course_id || '—'"></td>
+                                <td class="px-4 py-2" x-text="row.section_id || '—'"></td>
+                                <td class="px-4 py-2 text-right" x-text="formatNumber(row.credits)"></td>
+                                <td class="px-4 py-2 text-right" x-text="row.letter || 'N/A'"></td>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>
+                    </template>
+                    <template x-if="!gpaResult.details.length">
+                      <p x-cloak class="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-6 text-center text-sm text-slate-500">No graded enrollments found for this selection.</p>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </article>
+
+            <article class="lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <header>
+                <h3 class="text-lg font-semibold text-slate-900">CSV export</h3>
+                <p class="text-sm text-slate-500">Download enrollments with section and grading details.</p>
+              </header>
+              <div class="mt-6 space-y-4">
+                <label class="flex flex-col text-sm font-medium text-slate-600">
+                  Semester filter <span class="text-xs font-normal text-slate-400">(optional)</span>
+                  <input type="text" x-model="csvSemester" class="mt-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" placeholder="e.g. 2025A" />
+                </label>
+                <p class="text-xs text-slate-500">When no semester is provided, all enrollments are exported.</p>
+                <a :href="csvDownloadUrl" :download="csvFilename" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v12" stroke-linecap="round" /><path d="m7.5 10.5 4.5 4.5 4.5-4.5" stroke-linecap="round" stroke-linejoin="round" /><path d="M5.25 15.75v3a.75.75 0 0 0 .75.75h12a.75.75 0 0 0 .75-.75v-3" stroke-linecap="round" /></svg>
+                  Download enrollments.csv
+                </a>
+              </div>
+            </article>
+          </section>
+
+          <section class="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <header class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-900">Course performance</h3>
+                <p class="text-sm text-slate-500">Aggregate grade trends for a specific course and term.</p>
+              </div>
+              <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">Live averages</span>
+            </header>
+
+            <form class="mt-6 grid gap-4 md:grid-cols-4" @submit.prevent="fetchCourseStats">
+              <label class="flex flex-col text-sm font-medium text-slate-600 md:col-span-2">
+                Course ID
+                <input type="text" x-model="courseForm.course_id" class="mt-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" placeholder="e.g. CS101" required />
+              </label>
+              <label class="flex flex-col text-sm font-medium text-slate-600">
+                Semester <span class="text-xs font-normal text-slate-400">(optional)</span>
+                <input type="text" x-model="courseForm.semester" class="mt-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" placeholder="e.g. 2025A" />
+              </label>
+              <div class="flex items-end">
+                <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:opacity-60" :disabled="courseLoading">
+                  <svg x-show="!courseLoading" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m5.25 12 4.5 4.5L18.75 7.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  <svg x-show="courseLoading" x-cloak class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9" stroke-opacity="0.25" /><path d="M21 12a9 9 0 0 0-9-9" stroke-linecap="round" /></svg>
+                  Generate stats
+                </button>
+              </div>
+            </form>
+
+            <template x-if="courseError">
+              <div x-cloak class="mt-4 rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700" role="alert">
+                <p class="font-semibold">Unable to load course stats.</p>
+                <p class="mt-1" x-text="courseError"></p>
+              </div>
+            </template>
+
+            <template x-if="courseResult">
+              <div x-cloak class="mt-6 space-y-6">
+                <div class="grid gap-4 md:grid-cols-4">
+                  <div class="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
+                    <p class="text-xs uppercase tracking-wide text-slate-400">Course</p>
+                    <p class="mt-2 text-sm font-semibold text-slate-800" x-text="courseResult.course_id"></p>
+                    <p class="text-xs text-slate-500" x-text="courseResult.course_title || 'Untitled course'"></p>
+                  </div>
+                  <div class="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
+                    <p class="text-xs uppercase tracking-wide text-slate-400">Semester</p>
+                    <p class="mt-2 text-sm font-semibold text-slate-800" x-text="courseResult.semester || 'All terms'"></p>
+                  </div>
+                  <div class="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
+                    <p class="text-xs uppercase tracking-wide text-slate-400">Enrollments</p>
+                    <p class="mt-2 text-sm font-semibold text-slate-800" x-text="formatNumber(courseResult.count)"></p>
+                  </div>
+                  <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                    <p class="text-xs uppercase tracking-wide text-emerald-600">Average scores</p>
+                    <p class="mt-2 text-sm font-semibold text-emerald-700">Midterm <span x-text="formatDecimal(courseResult.avg_midterm)"></span> · Final <span x-text="formatDecimal(courseResult.avg_final)"></span></p>
+                  </div>
+                </div>
+
+                <div class="grid gap-6 lg:grid-cols-2">
+                  <div>
+                    <h4 class="text-sm font-semibold text-slate-700">Letter distribution</h4>
+                    <template x-if="courseResult.distribution.length">
+                      <div x-cloak class="mt-3 h-64">
+                        <canvas x-ref="distributionCanvas" aria-label="Bar chart showing grade distribution" role="img"></canvas>
+                      </div>
+                    </template>
+                    <template x-if="!courseResult.distribution.length">
+                      <p x-cloak class="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-6 text-center text-sm text-slate-500">No graded enrollments to chart yet.</p>
+                    </template>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-semibold text-slate-700">Counts by letter</h4>
+                    <ul class="mt-3 space-y-2 text-sm text-slate-600">
+                      <template x-for="entry in courseResult.distribution" :key="entry.letter">
+                        <li class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-2">
+                          <span class="font-semibold text-slate-800" x-text="entry.letter"></span>
+                          <span x-text="formatNumber(entry.count)"></span>
+                        </li>
+                      </template>
+                      <template x-if="!courseResult.distribution.length">
+                        <li class="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3 text-center text-slate-500">Distribution pending grade submissions.</li>
+                      </template>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('reportsPage', () => ({
+        gpaForm: { student_id: '', semester: '' },
+        gpaLoading: false,
+        gpaError: '',
+        gpaResult: null,
+        courseForm: { course_id: '', semester: '' },
+        courseLoading: false,
+        courseError: '',
+        courseResult: null,
+        distributionChart: null,
+        csvSemester: '',
+        async fetchGpa() {
+          const studentId = (this.gpaForm.student_id || '').trim();
+          const semester = (this.gpaForm.semester || '').trim().toUpperCase();
+          this.gpaForm.semester = semester;
+          if (!studentId) {
+            this.gpaError = 'Student ID is required.';
+            return;
+          }
+          this.gpaLoading = true;
+          this.gpaError = '';
+          this.gpaResult = null;
+          try {
+            const params = new URLSearchParams();
+            if (semester) params.set('semester', semester);
+            const response = await fetch(`/api/reports/gpa/${encodeURIComponent(studentId)}` + (params.toString() ? `?${params}` : ''));
+            const payload = await response.json().catch(() => null);
+            if (!response.ok || !payload) {
+              const message = (payload && payload.error) || `Request failed with status ${response.status}`;
+              throw new Error(message);
+            }
+            this.gpaResult = {
+              student_id: payload.student_id,
+              semester: payload.semester || null,
+              total_credits: payload.total_credits ?? 0,
+              gpa: payload.gpa ?? null,
+              details: Array.isArray(payload.details) ? payload.details : [],
+            };
+          } catch (error) {
+            console.error('Failed to load GPA report', error);
+            this.gpaError = error instanceof Error ? error.message : 'Please try again with a different student ID.';
+          } finally {
+            this.gpaLoading = false;
+          }
+        },
+        async fetchCourseStats() {
+          const courseId = (this.courseForm.course_id || '').trim();
+          const semester = (this.courseForm.semester || '').trim().toUpperCase();
+          this.courseForm.semester = semester;
+          if (!courseId) {
+            this.courseError = 'Course ID is required.';
+            return;
+          }
+          this.courseLoading = true;
+          this.courseError = '';
+          this.courseResult = null;
+          this.destroyDistributionChart();
+          try {
+            const params = new URLSearchParams();
+            if (semester) params.set('semester', semester);
+            const response = await fetch(`/api/reports/course-stats/${encodeURIComponent(courseId)}` + (params.toString() ? `?${params}` : ''));
+            const payload = await response.json().catch(() => null);
+            if (!response.ok || !payload) {
+              const message = (payload && payload.error) || `Request failed with status ${response.status}`;
+              throw new Error(message);
+            }
+            this.courseResult = {
+              course_id: payload.course_id,
+              course_title: payload.course_title,
+              semester: payload.semester || null,
+              count: payload.count ?? 0,
+              avg_midterm: payload.avg_midterm ?? null,
+              avg_final: payload.avg_final ?? null,
+              distribution: Array.isArray(payload.distribution) ? payload.distribution : [],
+            };
+            this.$nextTick(() => {
+              this.renderDistributionChart();
+            });
+          } catch (error) {
+            console.error('Failed to load course stats', error);
+            this.courseError = error instanceof Error ? error.message : 'Please verify the course ID and try again.';
+          } finally {
+            this.courseLoading = false;
+          }
+        },
+        destroyDistributionChart() {
+          if (this.distributionChart) {
+            this.distributionChart.destroy();
+            this.distributionChart = null;
+          }
+        },
+        renderDistributionChart() {
+          if (!this.courseResult || !this.$refs.distributionCanvas) {
+            this.destroyDistributionChart();
+            return;
+          }
+          const labels = this.courseResult.distribution.map((entry) => entry.letter);
+          const data = this.courseResult.distribution.map((entry) => Number(entry.count) || 0);
+          if (!labels.length) {
+            this.destroyDistributionChart();
+            return;
+          }
+          const ctx = this.$refs.distributionCanvas.getContext('2d');
+          if (!ctx) return;
+          if (this.distributionChart) {
+            this.distributionChart.data.labels = labels;
+            this.distributionChart.data.datasets[0].data = data;
+            this.distributionChart.update();
+            return;
+          }
+          this.distributionChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: 'Enrollments',
+                  data,
+                  backgroundColor: '#0f172a',
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+              },
+              scales: {
+                x: { ticks: { color: '#475569' } },
+                y: {
+                  ticks: { color: '#475569' },
+                  beginAtZero: true,
+                  suggestedMax: Math.max(...data, 5) + 2,
+                },
+              },
+            },
+          });
+        },
+        formatNumber(value) {
+          if (value === null || value === undefined) return '0';
+          try {
+            return new Intl.NumberFormat('en-US').format(Number(value) || 0);
+          } catch (error) {
+            return String(value);
+          }
+        },
+        formatDecimal(value) {
+          if (value === null || value === undefined || Number.isNaN(Number(value))) {
+            return '—';
+          }
+          try {
+            return Number(value).toFixed(2);
+          } catch (error) {
+            return String(value);
+          }
+        },
+        get csvDownloadUrl() {
+          const semester = (this.csvSemester || '').trim().toUpperCase();
+          if (!semester) return '/api/reports/enrollments.csv';
+          return `/api/reports/enrollments.csv?semester=${encodeURIComponent(semester)}`;
+        },
+        get csvFilename() {
+          const semester = (this.csvSemester || '').trim().toUpperCase();
+          return semester ? `enrollments_${semester}.csv` : 'enrollments.csv';
+        },
+      }));
+    });
+  </script>
+</body>
+</html>
