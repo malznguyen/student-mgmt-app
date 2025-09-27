@@ -81,7 +81,7 @@
       </header>
 
       <main class="flex-1">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="studentsPage()">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="studentsPage()" x-on:keydown.escape.window="modalOpen ? closeModal() : null">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 class="text-3xl font-semibold text-slate-900">Student roster</h2>
@@ -123,6 +123,11 @@
               </div>
             </div>
 
+            <div x-cloak x-show="loadError" x-transition class="mt-6 rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-700" role="alert">
+              <p class="font-medium">Unable to load students.</p>
+              <p class="mt-1 text-rose-600" x-text="loadError"></p>
+            </div>
+
             <div class="relative mt-6">
               <template x-if="loading">
                 <div class="space-y-3">
@@ -140,7 +145,7 @@
                 </div>
               </template>
 
-              <template x-if="!loading && filteredStudents.length === 0">
+              <template x-if="!loading && !loadError && filteredStudents.length === 0">
                 <div class="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 py-12 text-center">
                   <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
                     <svg class="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16.5 10.5a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" /><path d="M8.25 15.75a6.75 6.75 0 0 0 7.5 0" stroke-linecap="round" /><path d="M5.25 5.25 3 7.5m18-2.25-2.25 2.25" stroke-linecap="round" /></svg>
@@ -164,6 +169,7 @@
                         <th scope="col" class="px-4 py-3 font-semibold">ID</th>
                         <th scope="col" class="px-4 py-3 font-semibold">Full name</th>
                         <th scope="col" class="px-4 py-3 font-semibold">Email</th>
+                        <th scope="col" class="px-4 py-3 font-semibold">Phone</th>
                         <th scope="col" class="px-4 py-3 font-semibold">Major</th>
                         <th scope="col" class="px-4 py-3 font-semibold">Year</th>
                         <th scope="col" class="px-4 py-3 font-semibold text-right">Actions</th>
@@ -180,6 +186,7 @@
                           <td class="px-4 py-3">
                             <a :href="`mailto:${student.email}`" class="text-sm text-slate-700 hover:text-slate-900" x-text="student.email"></a>
                           </td>
+                          <td class="px-4 py-3 text-sm text-slate-600" x-text="student.phone || '—'"></td>
                           <td class="px-4 py-3">
                             <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700">
                               <span class="h-2 w-2 rounded-full bg-slate-400"></span>
@@ -193,9 +200,9 @@
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4.5 19.5 3.75-.938a2 2 0 0 0 .938-.52l9.02-9.02a1.5 1.5 0 0 0-2.121-2.122l-9.02 9.02a2 2 0 0 0-.52.938L4.5 19.5Z" /><path d="M14.25 6.75 17.25 9.75" /></svg>
                                 Edit
                               </button>
-                              <button type="button" @click="deleteStudent(student._id)" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">
+                              <button type="button" @click="deleteStudent(student._id)" :disabled="deletingId === student._id" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60">
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 7.5h10.5" stroke-linecap="round" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M8.25 7.5V18a1.5 1.5 0 0 0 1.5 1.5h4.5A1.5 1.5 0 0 0 15.75 18V7.5" /></svg>
-                                Delete
+                                <span x-text="deletingId === student._id ? 'Removing…' : 'Delete'"></span>
                               </button>
                             </div>
                           </td>
@@ -218,7 +225,7 @@
               <p class="text-sm font-semibold" x-text="toast.message"></p>
               <p class="text-xs text-slate-500" x-text="toast.detail"></p>
             </div>
-            <button type="button" class="ml-auto text-xs font-medium text-slate-500 hover:text-slate-700" @click="toast.visible = false">Dismiss</button>
+            <button type="button" class="ml-auto text-xs font-medium text-slate-500 hover:text-slate-700" @click="dismissToast()">Dismiss</button>
           </div>
         </div>
 
@@ -237,7 +244,7 @@
             <form class="mt-6 space-y-4" @submit.prevent="saveStudent()">
               <div>
                 <label for="student-id" class="text-sm font-medium text-slate-700">Student ID</label>
-                <input id="student-id" type="text" x-model="form._id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors._id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. S-1101" required />
+                <input id="student-id" type="text" x-model="form._id" :disabled="isEditing" class="mt-1 w-full rounded-xl border px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" :class="errors._id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. S-1101" required />
                 <p class="mt-1 text-xs text-slate-500">Use the institutional identifier students receive upon enrollment.</p>
                 <p x-show="errors._id" x-text="errors._id" class="mt-1 text-xs font-medium text-rose-600"></p>
               </div>
@@ -252,6 +259,12 @@
                 <input id="student-email" type="email" x-model="form.email" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.email ? 'border-rose-300' : 'border-slate-200'" placeholder="name@example.edu" required />
                 <p class="mt-1 text-xs text-slate-500">Institution-issued email only.</p>
                 <p x-show="errors.email" x-text="errors.email" class="mt-1 text-xs font-medium text-rose-600"></p>
+              </div>
+              <div>
+                <label for="student-phone" class="text-sm font-medium text-slate-700">Phone <span class="text-slate-400">(optional)</span></label>
+                <input id="student-phone" type="tel" x-model="form.phone" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.phone ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. (555) 123-4567" inputmode="tel" />
+                <p class="mt-1 text-xs text-slate-500">Shared with advising and emergency contacts teams.</p>
+                <p x-show="errors.phone" x-text="errors.phone" class="mt-1 text-xs font-medium text-rose-600"></p>
               </div>
               <div class="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -284,9 +297,9 @@
               </div>
               <div class="flex items-center justify-end gap-3 pt-4">
                 <button type="button" class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:border-slate-300" @click="closeModal()">Cancel</button>
-                <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+                <button type="submit" :disabled="saving" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth transition disabled:cursor-not-allowed disabled:opacity-60">
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.25 12.75 9 16.5l9-9" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                  Save student
+                  <span x-text="saving ? 'Saving…' : 'Save student'"></span>
                 </button>
               </div>
             </form>
@@ -306,16 +319,20 @@
       { id: 'BUS', name: 'Business Administration' }
     ];
 
-    const years = ['2024', '2025', '2026', '2027', '2028'];
+    const years = ['2024', '2025', '2026', '2027', '2028', '2029'];
 
     document.addEventListener('alpine:init', () => {
       Alpine.data('studentsPage', () => ({
         search: '',
         loading: true,
+        loadError: '',
         students: [],
         modalOpen: false,
         isEditing: false,
-        form: { _id: '', full_name: '', email: '', major_dept_id: '', year: '', pronouns: '' },
+        saving: false,
+        deletingId: '',
+        toastTimeout: null,
+        form: { _id: '', full_name: '', email: '', major_dept_id: '', year: '', pronouns: '', phone: '' },
         errors: {},
         toast: { visible: false, message: '', detail: '', variant: 'success' },
         departments: departmentOptions,
@@ -327,9 +344,13 @@
           if (!this.search.trim()) return this.students;
           const term = this.search.toLowerCase();
           return this.students.filter((student) => {
-            return [student._id, student.full_name, student.email, this.departmentMap[student.major_dept_id]].some((value) =>
-              String(value || '').toLowerCase().includes(term)
-            );
+            return [
+              student._id,
+              student.full_name,
+              student.email,
+              student.phone,
+              this.departmentMap[student.major_dept_id]
+            ].some((value) => String(value || '').toLowerCase().includes(term));
           });
         },
         get classYears() {
@@ -338,24 +359,32 @@
         init() {
           this.fetchStudents();
         },
+        blankForm() {
+          return { _id: '', full_name: '', email: '', major_dept_id: '', year: '', pronouns: '', phone: '' };
+        },
         async fetchStudents() {
           this.loading = true;
+          this.loadError = '';
           try {
             const response = await fetch('/api/students');
-            if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
-            const payload = await response.json();
-            if (!Array.isArray(payload)) throw new Error('Unexpected response payload');
+            const payload = await response.json().catch(() => null);
+            if (!response.ok || !Array.isArray(payload)) {
+              const message = (payload && payload.error) || `Request failed with status ${response.status}`;
+              throw new Error(message);
+            }
             this.students = payload.map((student) => ({
               _id: student._id ?? '',
               full_name: student.full_name ?? '',
               email: student.email ?? '',
               major_dept_id: student.major_dept_id ?? '',
-              year: student.year ?? '',
-              pronouns: student.pronouns ?? ''
+              year: student.year != null ? String(student.year) : '',
+              pronouns: student.pronouns ?? '',
+              phone: student.phone ?? ''
             }));
           } catch (error) {
             console.error('Failed to load students', error);
             this.students = [];
+            this.loadError = error instanceof Error ? error.message : 'Please refresh and try again.';
             this.showToast('Unable to load students.', 'error', 'Please refresh or try again later.');
           } finally {
             this.loading = false;
@@ -363,18 +392,31 @@
         },
         openCreate() {
           this.isEditing = false;
-          this.form = { _id: '', full_name: '', email: '', major_dept_id: '', year: '', pronouns: '' };
+          this.form = this.blankForm();
           this.errors = {};
+          this.saving = false;
           this.modalOpen = true;
         },
         openEdit(student) {
           this.isEditing = true;
-          this.form = { ...student };
+          this.form = {
+            _id: student._id,
+            full_name: student.full_name,
+            email: student.email,
+            major_dept_id: student.major_dept_id,
+            year: student.year ? String(student.year) : '',
+            pronouns: student.pronouns || '',
+            phone: student.phone || ''
+          };
           this.errors = {};
+          this.saving = false;
           this.modalOpen = true;
         },
         closeModal() {
           this.modalOpen = false;
+          this.form = this.blankForm();
+          this.errors = {};
+          this.saving = false;
         },
         validate() {
           const nextErrors = {};
@@ -387,43 +429,122 @@
           }
           if (!this.form.major_dept_id) nextErrors.major_dept_id = 'Select a primary department.';
           if (!this.form.year) nextErrors.year = 'Choose an expected graduation year.';
+          if (this.form.phone && !/^[+\d()\s-]{7,}$/.test(this.form.phone)) {
+            nextErrors.phone = 'Enter a valid phone number.';
+          }
           this.errors = nextErrors;
           return Object.keys(nextErrors).length === 0;
         },
-        saveStudent() {
+        async saveStudent() {
           if (!this.validate()) {
-            this.showToast('Please fix the highlighted fields.', 'error', 'Missing required information');
+            this.showToast('Please fix the highlighted fields.', 'error', 'Missing required information.');
             return;
           }
+
+          this.saving = true;
+          this.errors = {};
+
+          const payload = {
+            _id: this.form._id.trim(),
+            full_name: this.form.full_name.trim(),
+            email: this.form.email.trim(),
+            major_dept_id: this.form.major_dept_id,
+            year: this.form.year,
+            pronouns: this.form.pronouns.trim(),
+            phone: this.form.phone.trim()
+          };
+
+          const method = this.isEditing ? 'PUT' : 'POST';
+          const url = this.isEditing
+            ? `/api/students/${encodeURIComponent(this.form._id)}`
+            : '/api/students';
+
           if (this.isEditing) {
-            const index = this.students.findIndex((student) => student._id === this.form._id);
-            if (index !== -1) {
-              this.students.splice(index, 1, { ...this.form });
-              this.showToast('Student updated successfully.', 'success', 'Changes are saved locally.');
-            }
-          } else {
-            if (this.students.some((student) => student._id === this.form._id)) {
-              this.errors._id = 'A student with this ID already exists.';
-              this.showToast('Duplicate student ID.', 'error', 'Use a unique identifier.');
+            delete payload._id;
+          }
+
+          try {
+            const response = await fetch(url, {
+              method,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const result = await response.json().catch(() => null);
+
+            if (!response.ok || !result) {
+              const details = (result && result.details) || {};
+              this.errors = details;
+              const detailMessage =
+                details.email || details._id || Object.values(details)[0] || '';
+              this.showToast(
+                (result && result.error) || 'Unable to save student.',
+                'error',
+                detailMessage
+              );
               return;
             }
-            this.students = [...this.students, { ...this.form }];
-            this.showToast('Student added to roster.', 'success', 'Remember to sync with the SIS.');
+
+            await this.fetchStudents();
+            this.closeModal();
+            this.showToast(
+              this.isEditing ? 'Student updated successfully.' : 'Student created successfully.',
+              'success',
+              this.isEditing ? 'Roster has the latest details.' : 'Roster refreshed with the new profile.'
+            );
+          } catch (error) {
+            console.error('Failed to save student', error);
+            this.showToast('Unable to save student.', 'error', 'Check your network connection.');
+          } finally {
+            this.saving = false;
           }
-          this.closeModal();
         },
-        deleteStudent(id) {
+        async deleteStudent(id) {
           if (!window.confirm('Remove this student from the roster?')) {
             return;
           }
-          this.students = this.students.filter((student) => student._id !== id);
-          this.showToast('Student removed.', 'success', 'The change is reflected instantly.');
+
+          this.deletingId = id;
+
+          try {
+            const response = await fetch(`/api/students/${encodeURIComponent(id)}`, {
+              method: 'DELETE'
+            });
+            const result = await response.json().catch(() => null);
+
+            if (!response.ok || !result || !result.deleted) {
+              this.showToast(
+                (result && result.error) || 'Unable to delete student.',
+                'error',
+                'Please try again in a moment.'
+              );
+              return;
+            }
+
+            await this.fetchStudents();
+            this.showToast('Student removed.', 'success', 'The roster now reflects this change.');
+          } catch (error) {
+            console.error('Failed to delete student', error);
+            this.showToast('Unable to delete student.', 'error', 'Check your network connection.');
+          } finally {
+            this.deletingId = '';
+          }
         },
         showToast(message, variant = 'success', detail = '') {
+          if (this.toastTimeout) {
+            clearTimeout(this.toastTimeout);
+          }
           this.toast = { visible: true, message, variant, detail };
-          setTimeout(() => {
+          this.toastTimeout = setTimeout(() => {
             this.toast.visible = false;
-          }, 3200);
+            this.toastTimeout = null;
+          }, 3400);
+        },
+        dismissToast() {
+          if (this.toastTimeout) {
+            clearTimeout(this.toastTimeout);
+            this.toastTimeout = null;
+          }
+          this.toast.visible = false;
         }
       }));
     });

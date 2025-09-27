@@ -1,9 +1,8 @@
-"""Load sample data into the MongoDB university database."""
+"""Load sample data into the MongoDB database."""
 
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -31,27 +30,30 @@ def read_seed_file() -> Dict[str, List[Dict[str, Any]]]:
 
 def main() -> None:
     load_env()
-    uri = os.getenv("MONGODB_URI")
-    if not uri:
-        raise RuntimeError("MONGODB_URI is not set in backend/.env")
+    from backend.src.config import get_db_name, get_mongo_uri  # type: ignore
 
+    uri = get_mongo_uri()
     client = MongoClient(uri)
-    database = client["university"]
+    database = client[get_db_name()]
 
     seed_data = read_seed_file()
 
     for collection_name, documents in seed_data.items():
         if not isinstance(documents, list):
-            raise ValueError(f"Seed data for collection '{collection_name}' must be a list")
+            raise ValueError(
+                f"Seed data for collection '{collection_name}' must be a list"
+            )
 
         collection = database[collection_name]
         collection.delete_many({})
         if documents:
             collection.insert_many(documents)
 
-        print(f"Loaded {len(documents)} document(s) into '{collection_name}' collection")
+        print(
+            f"Loaded {len(documents)} document(s) into '{collection_name}' collection"
+        )
 
-    print("Seeding complete for database 'university'.")
+    print(f"Seeding complete for database '{get_db_name()}'.")
 
 
 if __name__ == "__main__":
