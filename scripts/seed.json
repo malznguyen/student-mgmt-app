@@ -5,64 +5,72 @@
       "full_name": "Asha Patel",
       "email": "asha.patel@example.edu",
       "major_dept_id": "CS",
-      "year": "2025",
-      "pronouns": "she/her"
+      "year": 2025,
+      "pronouns": "she/her",
+      "phone": "+1 (555) 010-1001"
     },
     {
       "_id": "S-1002",
       "full_name": "Ethan Wright",
       "email": "ethan.wright@example.edu",
       "major_dept_id": "MATH",
-      "year": "2026",
-      "pronouns": "he/him"
+      "year": 2026,
+      "pronouns": "he/him",
+      "phone": "+1 (555) 010-1002"
     },
     {
       "_id": "S-1003",
       "full_name": "Lina Alvarez",
       "email": "lina.alvarez@example.edu",
       "major_dept_id": "BIO",
-      "year": "2025",
-      "pronouns": "she/they"
+      "year": 2025,
+      "pronouns": "she/they",
+      "phone": "+1 (555) 010-1003"
     },
     {
       "_id": "S-1004",
       "full_name": "Noah Kim",
       "email": "noah.kim@example.edu",
       "major_dept_id": "CS",
-      "year": "2027",
-      "pronouns": "he/him"
+      "year": 2027,
+      "pronouns": "he/him",
+      "phone": "+1 (555) 010-1004"
     },
     {
       "_id": "S-1005",
       "full_name": "Maya Chen",
       "email": "maya.chen@example.edu",
       "major_dept_id": "ECON",
-      "year": "2024",
-      "pronouns": "she/her"
+      "year": 2024,
+      "pronouns": "she/her",
+      "phone": "+1 (555) 010-1005"
     },
     {
       "_id": "S-1006",
       "full_name": "Gabriel Souza",
       "email": "gabriel.souza@example.edu",
       "major_dept_id": "PHYS",
-      "year": "2026",
-      "pronouns": "he/him"
+      "year": 2026,
+      "pronouns": "he/him",
+      "phone": "+1 (555) 010-1006"
     },
     {
       "_id": "S-1007",
       "full_name": "Leah Johnson",
       "email": "leah.johnson@example.edu",
       "major_dept_id": "CS",
-      "year": "2025",
-      "pronouns": "she/her"
+      "year": 2025,
+      "pronouns": "she/her",
+      "phone": "+1 (555) 010-1007"
     },
     {
       "_id": "S-1008",
       "full_name": "Omar Ali",
       "email": "omar.ali@example.edu",
       "major_dept_id": "ECON",
-      "year": "2027",
-      "pronouns": "he/him"
+      "year": 2027,
+      "pronouns": "he/him",
+      "phone": "+1 (555) 010-1008"
     }
   ]
 }

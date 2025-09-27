@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
@@ -35,4 +36,23 @@ def get_mongo_uri() -> str:
     return uri
 
 
-__all__ = ["ConfigError", "get_mongo_uri"]
+@lru_cache(maxsize=None)
+def get_db_name() -> str:
+    """Return the database name derived from the MongoDB URI or env var."""
+
+    if db_name := os.getenv("MONGODB_DB"):
+        return db_name
+
+    uri = get_mongo_uri()
+    parsed = urlparse(uri)
+    if parsed.path and parsed.path not in {"", "/"}:
+        db_name = parsed.path.lstrip("/")
+        if db_name:
+            return db_name
+
+    raise ConfigError(
+        "Database name not found. Provide it via MONGODB_URI or MONGODB_DB."
+    )
+
+
+__all__ = ["ConfigError", "get_mongo_uri", "get_db_name"]
