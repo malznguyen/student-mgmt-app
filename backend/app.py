@@ -19,11 +19,14 @@ from src.db import (
     serialize_student,
     get_db,
 )
+from src.routes import reports_bp
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_FOLDER = BASE_DIR.parent / "frontend"
 
 app = Flask(__name__, static_folder=str(STATIC_FOLDER), static_url_path="/")
+
+app.register_blueprint(reports_bp)
 
 logger = logging.getLogger(__name__)
 
