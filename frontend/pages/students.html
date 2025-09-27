@@ -1,12 +1,423 @@
-﻿<!DOCTYPE html><html lang="vi"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Students</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</head><body class="min-h-screen bg-slate-50">
-<div class="max-w-4xl mx-auto p-6">
-  <a href="/" class="text-slate-600 hover:text-black">← Back</a>
-  <h1 class="text-xl font-semibold mt-2">Students</h1>
-  <p class="text-slate-600 mt-2">Baseline page. We’ll wire real APIs next.</p>
-</div>
-</body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Students · Student Mgmt</title>
+  <link rel="stylesheet" href="../style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-700" x-data="{ sidebarOpen: false }" x-on:keydown.escape.window="sidebarOpen = false">
+  <div class="flex min-h-screen">
+    <div x-cloak x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-30 bg-slate-900/40 md:hidden" aria-hidden="true" @click="sidebarOpen = false"></div>
+    <aside x-cloak x-show="sidebarOpen" x-transition:enter="transition transform duration-200" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition transform duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 md:static md:translate-x-0 md:block">
+      <div class="flex items-center gap-3 px-6 h-16 border-b border-slate-100">
+        <img src="../assets/logo.svg" alt="Student Management logo" class="h-9 w-9" />
+        <div>
+          <p class="text-sm uppercase tracking-widest text-slate-400">Student Mgmt</p>
+          <p class="text-base font-semibold text-slate-800">Admin Console</p>
+        </div>
+      </div>
+      <nav class="px-4 py-6 space-y-1 text-sm font-medium">
+        <a href="/" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 9.75 12 3l9 6.75V21a.75.75 0 0 1-.75.75H3.75A.75.75 0 0 1 3 21V9.75Z" /><path d="M9 21v-6h6v6" stroke-linecap="round" /></svg>
+          </span>
+          Dashboard
+        </a>
+        <a href="/pages/students.html" aria-current="page" class="flex items-center gap-3 rounded-xl px-3 py-2 bg-slate-900/5 text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" stroke-linecap="round" /></svg>
+          </span>
+          Students
+        </a>
+        <a href="/pages/courses.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 5.25h15" stroke-linecap="round" /><path d="M6 4.5h12A1.5 1.5 0 0 1 19.5 6v13.5a.75.75 0 0 1-.75.75H5.25a.75.75 0 0 1-.75-.75V6A1.5 1.5 0 0 1 6 4.5Z" /><path d="M9 9h6m-6 4.5h6" stroke-linecap="round" /></svg>
+          </span>
+          Courses
+        </a>
+        <a href="/pages/sections.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 6.75h15" stroke-linecap="round" /><path d="M4.5 12h15" stroke-linecap="round" /><path d="M4.5 17.25h15" stroke-linecap="round" /></svg>
+          </span>
+          Sections
+        </a>
+        <a href="/pages/enrollments.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 4.5h15v15h-15z" /><path d="M8.25 8.25h7.5v7.5h-7.5z" /><path d="M8.25 4.5v3.75M15.75 4.5v3.75M4.5 12h3.75m7.5 0H19.5M8.25 16.5V19.5m7.5-3v3" stroke-linecap="round" /></svg>
+          </span>
+          Enrollments
+        </a>
+      </nav>
+      <div class="mt-auto px-6 py-6 border-t border-slate-100 text-xs text-slate-500">
+        <p>Academic year <span class="font-semibold text-slate-700">2025</span></p>
+        <p class="mt-1">Admissions freeze <span class="font-semibold text-slate-700">in 4 days</span></p>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-h-screen">
+      <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div class="flex items-center justify-between px-4 sm:px-6 h-16">
+          <div class="flex items-center gap-3">
+            <button type="button" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900 md:hidden" @click="sidebarOpen = true" aria-label="Open navigation menu">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 7.5h15M4.5 12h15M4.5 16.5h15" stroke-linecap="round" /></svg>
+            </button>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-slate-400">Directory</p>
+              <h1 class="text-lg font-semibold text-slate-900">Students</h1>
+            </div>
+          </div>
+          <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+            <a href="/" class="hover:text-slate-900">Dashboard</a>
+            <a href="/pages/students.html" class="text-slate-900">Students</a>
+            <a href="/pages/courses.html" class="hover:text-slate-900">Courses</a>
+            <a href="/pages/sections.html" class="hover:text-slate-900">Sections</a>
+            <a href="/pages/enrollments.html" class="hover:text-slate-900">Enrollments</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="flex-1">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="studentsPage()">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 class="text-3xl font-semibold text-slate-900">Student roster</h2>
+              <p class="mt-2 text-slate-600">Search, add, and manage student profiles for the current academic cycle.</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
+                Add student
+              </button>
+              <button type="button" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-slate-300">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5.25 7.5h13.5" stroke-linecap="round" /><path d="M5.25 12h13.5" stroke-linecap="round" /><path d="M5.25 16.5h13.5" stroke-linecap="round" /></svg>
+                Export CSV
+              </button>
+            </div>
+          </div>
+
+          <section class="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" aria-labelledby="student-search">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div class="flex-1">
+                <label id="student-search" class="sr-only" for="search">Search students</label>
+                <div class="relative">
+                  <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m17 17 3.5 3.5" stroke-linecap="round" /></svg>
+                  </span>
+                  <input x-model="search" type="search" id="search" placeholder="Search by name, email, or ID" class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
+                </div>
+                <p class="mt-2 text-xs text-slate-500">Type to filter students instantly. Search is case-insensitive.</p>
+              </div>
+              <div class="grid grid-cols-2 gap-3 text-xs text-slate-500 sm:flex sm:flex-col sm:text-right">
+                <div>
+                  <p class="font-semibold text-slate-900" x-text="students.length"></p>
+                  <p>Total students</p>
+                </div>
+                <div>
+                  <p class="font-semibold text-slate-900" x-text="classYears"></p>
+                  <p>Class years tracked</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="relative mt-6">
+              <template x-if="loading">
+                <div class="space-y-3">
+                  <template x-for="i in 5" :key="i">
+                    <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+                      <div class="flex items-center justify-between">
+                        <div class="flex flex-col gap-2">
+                          <span class="skeleton-line h-4 w-40 rounded"></span>
+                          <span class="skeleton-line h-3 w-56 rounded"></span>
+                        </div>
+                        <span class="skeleton-line h-6 w-16 rounded"></span>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </template>
+
+              <template x-if="!loading && filteredStudents.length === 0">
+                <div class="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 py-12 text-center">
+                  <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
+                    <svg class="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16.5 10.5a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" /><path d="M8.25 15.75a6.75 6.75 0 0 0 7.5 0" stroke-linecap="round" /><path d="M5.25 5.25 3 7.5m18-2.25-2.25 2.25" stroke-linecap="round" /></svg>
+                  </span>
+                  <div>
+                    <h3 class="text-lg font-semibold text-slate-900">No students match your search</h3>
+                    <p class="mt-1 text-sm text-slate-500">Try adjusting your filters or add a new student to the roster.</p>
+                  </div>
+                  <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
+                    Add first student
+                  </button>
+                </div>
+              </template>
+
+              <div x-cloak x-show="!loading && filteredStudents.length" class="overflow-hidden rounded-2xl border border-slate-200">
+                <div class="overflow-x-auto">
+                  <table class="min-w-full divide-y divide-slate-200 text-left text-sm table-sticky-header">
+                    <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                      <tr>
+                        <th scope="col" class="px-4 py-3 font-semibold">ID</th>
+                        <th scope="col" class="px-4 py-3 font-semibold">Full name</th>
+                        <th scope="col" class="px-4 py-3 font-semibold">Email</th>
+                        <th scope="col" class="px-4 py-3 font-semibold">Major</th>
+                        <th scope="col" class="px-4 py-3 font-semibold">Year</th>
+                        <th scope="col" class="px-4 py-3 font-semibold text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 bg-white">
+                      <template x-for="student in filteredStudents" :key="student._id">
+                        <tr class="hover:bg-slate-50">
+                          <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="student._id"></td>
+                          <td class="px-4 py-3">
+                            <div class="font-medium text-slate-900" x-text="student.full_name"></div>
+                            <p class="text-xs text-slate-500" x-text="student.pronouns"></p>
+                          </td>
+                          <td class="px-4 py-3">
+                            <a :href="`mailto:${student.email}`" class="text-sm text-slate-700 hover:text-slate-900" x-text="student.email"></a>
+                          </td>
+                          <td class="px-4 py-3">
+                            <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700">
+                              <span class="h-2 w-2 rounded-full bg-slate-400"></span>
+                              <span x-text="departmentMap[student.major_dept_id] || student.major_dept_id"></span>
+                            </span>
+                          </td>
+                          <td class="px-4 py-3 text-sm text-slate-700" x-text="student.year"></td>
+                          <td class="px-4 py-3 text-right">
+                            <div class="inline-flex items-center gap-2">
+                              <button type="button" @click="openEdit(student)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4.5 19.5 3.75-.938a2 2 0 0 0 .938-.52l9.02-9.02a1.5 1.5 0 0 0-2.121-2.122l-9.02 9.02a2 2 0 0 0-.52.938L4.5 19.5Z" /><path d="M14.25 6.75 17.25 9.75" /></svg>
+                                Edit
+                              </button>
+                              <button type="button" @click="deleteStudent(student._id)" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 7.5h10.5" stroke-linecap="round" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M8.25 7.5V18a1.5 1.5 0 0 0 1.5 1.5h4.5A1.5 1.5 0 0 0 15.75 18V7.5" /></svg>
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div x-cloak x-show="toast.visible" x-transition class="fixed top-4 right-4 z-50 w-full max-w-sm rounded-xl border px-4 py-3 shadow-lg" :class="toast.variant === 'success' ? 'border-emerald-200 bg-emerald-50/90 text-emerald-800' : 'border-rose-200 bg-rose-50/90 text-rose-700'" role="status" aria-live="polite">
+          <div class="flex items-start gap-3">
+            <span class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full" :class="toast.variant === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><template x-if="toast.variant === 'success'"><path d="M5.25 12.75 9 16.5l9-9" stroke-linecap="round" stroke-linejoin="round" /></template><template x-if="toast.variant !== 'success'"><path d="M15 9 9 15m0-6 6 6" stroke-linecap="round" stroke-linejoin="round" /></template></svg>
+            </span>
+            <div>
+              <p class="text-sm font-semibold" x-text="toast.message"></p>
+              <p class="text-xs text-slate-500" x-text="toast.detail"></p>
+            </div>
+            <button type="button" class="ml-auto text-xs font-medium text-slate-500 hover:text-slate-700" @click="toast.visible = false">Dismiss</button>
+          </div>
+        </div>
+
+        <div x-cloak x-show="modalOpen" class="fixed inset-0 z-40 flex items-center justify-center px-4 py-6" role="dialog" aria-modal="true">
+          <div class="absolute inset-0 bg-slate-900/40" @click="closeModal()"></div>
+          <div class="relative w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl" x-trap.noscroll="modalOpen" x-transition>
+            <header class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-xs uppercase tracking-widest text-slate-400" x-text="isEditing ? 'Update student' : 'Create student'"></p>
+                <h2 class="text-2xl font-semibold text-slate-900" x-text="isEditing ? 'Edit student' : 'Add new student'"></h2>
+              </div>
+              <button type="button" class="rounded-lg border border-transparent p-2 text-slate-400 hover:text-slate-600" @click="closeModal()" aria-label="Close dialog">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 9l6 6m0-6-6 6" stroke-linecap="round" /></svg>
+              </button>
+            </header>
+            <form class="mt-6 space-y-4" @submit.prevent="saveStudent()">
+              <div>
+                <label for="student-id" class="text-sm font-medium text-slate-700">Student ID</label>
+                <input id="student-id" type="text" x-model="form._id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors._id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. S-1101" required />
+                <p class="mt-1 text-xs text-slate-500">Use the institutional identifier students receive upon enrollment.</p>
+                <p x-show="errors._id" x-text="errors._id" class="mt-1 text-xs font-medium text-rose-600"></p>
+              </div>
+              <div>
+                <label for="student-name" class="text-sm font-medium text-slate-700">Full name</label>
+                <input id="student-name" type="text" x-model="form.full_name" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.full_name ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. Jordan Rivers" required />
+                <p class="mt-1 text-xs text-slate-500">Legal display name used on transcripts.</p>
+                <p x-show="errors.full_name" x-text="errors.full_name" class="mt-1 text-xs font-medium text-rose-600"></p>
+              </div>
+              <div>
+                <label for="student-email" class="text-sm font-medium text-slate-700">Email address</label>
+                <input id="student-email" type="email" x-model="form.email" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.email ? 'border-rose-300' : 'border-slate-200'" placeholder="name@example.edu" required />
+                <p class="mt-1 text-xs text-slate-500">Institution-issued email only.</p>
+                <p x-show="errors.email" x-text="errors.email" class="mt-1 text-xs font-medium text-rose-600"></p>
+              </div>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label for="student-major" class="text-sm font-medium text-slate-700">Major department</label>
+                  <select id="student-major" x-model="form.major_dept_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.major_dept_id ? 'border-rose-300' : 'border-slate-200'" required>
+                    <option value="" disabled>Select department</option>
+                    <template x-for="dept in departments" :key="dept.id">
+                      <option :value="dept.id" x-text="`${dept.name} (${dept.id})`"></option>
+                    </template>
+                  </select>
+                  <p class="mt-1 text-xs text-slate-500">Students may have multiple majors; select the primary.</p>
+                  <p x-show="errors.major_dept_id" x-text="errors.major_dept_id" class="mt-1 text-xs font-medium text-rose-600"></p>
+                </div>
+                <div>
+                  <label for="student-year" class="text-sm font-medium text-slate-700">Grad year</label>
+                  <select id="student-year" x-model="form.year" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.year ? 'border-rose-300' : 'border-slate-200'" required>
+                    <option value="" disabled>Select year</option>
+                    <template x-for="year in yearOptions" :key="year">
+                      <option x-text="year"></option>
+                    </template>
+                  </select>
+                  <p class="mt-1 text-xs text-slate-500">Graduation year projected by the registrar.</p>
+                  <p x-show="errors.year" x-text="errors.year" class="mt-1 text-xs font-medium text-rose-600"></p>
+                </div>
+              </div>
+              <div>
+                <label for="student-pronouns" class="text-sm font-medium text-slate-700">Pronouns <span class="text-slate-400">(optional)</span></label>
+                <input id="student-pronouns" type="text" x-model="form.pronouns" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" placeholder="e.g. she/her" />
+                <p class="mt-1 text-xs text-slate-500">Shared with advisors and faculty rosters.</p>
+              </div>
+              <div class="flex items-center justify-end gap-3 pt-4">
+                <button type="button" class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:border-slate-300" @click="closeModal()">Cancel</button>
+                <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.25 12.75 9 16.5l9-9" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  Save student
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const studentSeed = [
+      { _id: 'S-1001', full_name: 'Asha Patel', email: 'asha.patel@example.edu', major_dept_id: 'CS', year: '2025', pronouns: 'she/her' },
+      { _id: 'S-1002', full_name: 'Ethan Wright', email: 'ethan.wright@example.edu', major_dept_id: 'MATH', year: '2026', pronouns: 'he/him' },
+      { _id: 'S-1003', full_name: 'Lina Alvarez', email: 'lina.alvarez@example.edu', major_dept_id: 'BIO', year: '2025', pronouns: 'she/they' },
+      { _id: 'S-1004', full_name: 'Noah Kim', email: 'noah.kim@example.edu', major_dept_id: 'CS', year: '2027', pronouns: 'he/him' },
+      { _id: 'S-1005', full_name: 'Maya Chen', email: 'maya.chen@example.edu', major_dept_id: 'ECON', year: '2024', pronouns: 'she/her' },
+      { _id: 'S-1006', full_name: 'Gabriel Souza', email: 'gabriel.souza@example.edu', major_dept_id: 'PHYS', year: '2026', pronouns: 'he/him' },
+      { _id: 'S-1007', full_name: 'Leah Johnson', email: 'leah.johnson@example.edu', major_dept_id: 'CS', year: '2025', pronouns: 'she/her' },
+      { _id: 'S-1008', full_name: 'Omar Ali', email: 'omar.ali@example.edu', major_dept_id: 'ECON', year: '2027', pronouns: 'he/him' }
+    ];
+
+    const departmentOptions = [
+      { id: 'CS', name: 'Computer Science' },
+      { id: 'MATH', name: 'Mathematics' },
+      { id: 'BIO', name: 'Biology' },
+      { id: 'PHYS', name: 'Physics' },
+      { id: 'ECON', name: 'Economics' },
+      { id: 'BUS', name: 'Business Administration' }
+    ];
+
+    const years = ['2024', '2025', '2026', '2027', '2028'];
+
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('studentsPage', () => ({
+        search: '',
+        loading: true,
+        students: [],
+        modalOpen: false,
+        isEditing: false,
+        form: { _id: '', full_name: '', email: '', major_dept_id: '', year: '', pronouns: '' },
+        errors: {},
+        toast: { visible: false, message: '', detail: '', variant: 'success' },
+        departments: departmentOptions,
+        yearOptions: years,
+        get departmentMap() {
+          return this.departments.reduce((acc, dept) => ({ ...acc, [dept.id]: dept.name }), {});
+        },
+        get filteredStudents() {
+          if (!this.search.trim()) return this.students;
+          const term = this.search.toLowerCase();
+          return this.students.filter((student) => {
+            return [student._id, student.full_name, student.email, this.departmentMap[student.major_dept_id]].some((value) =>
+              (value || '').toLowerCase().includes(term)
+            );
+          });
+        },
+        get classYears() {
+          return new Set(this.students.map((student) => student.year)).size;
+        },
+        init() {
+          setTimeout(() => {
+            this.students = studentSeed.map((student) => ({ ...student }));
+            this.loading = false;
+          }, 500);
+        },
+        openCreate() {
+          this.isEditing = false;
+          this.form = { _id: '', full_name: '', email: '', major_dept_id: '', year: '', pronouns: '' };
+          this.errors = {};
+          this.modalOpen = true;
+        },
+        openEdit(student) {
+          this.isEditing = true;
+          this.form = { ...student };
+          this.errors = {};
+          this.modalOpen = true;
+        },
+        closeModal() {
+          this.modalOpen = false;
+        },
+        validate() {
+          const nextErrors = {};
+          if (!this.form._id.trim()) nextErrors._id = 'Student ID is required.';
+          if (!this.form.full_name.trim()) nextErrors.full_name = 'Full name is required.';
+          if (!this.form.email.trim()) {
+            nextErrors.email = 'Email is required.';
+          } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email)) {
+            nextErrors.email = 'Enter a valid email address.';
+          }
+          if (!this.form.major_dept_id) nextErrors.major_dept_id = 'Select a primary department.';
+          if (!this.form.year) nextErrors.year = 'Choose an expected graduation year.';
+          this.errors = nextErrors;
+          return Object.keys(nextErrors).length === 0;
+        },
+        saveStudent() {
+          if (!this.validate()) {
+            this.showToast('Please fix the highlighted fields.', 'error', 'Missing required information');
+            return;
+          }
+          if (this.isEditing) {
+            const index = this.students.findIndex((student) => student._id === this.form._id);
+            if (index !== -1) {
+              this.students.splice(index, 1, { ...this.form });
+              this.showToast('Student updated successfully.', 'success', 'Changes are saved locally.');
+            }
+          } else {
+            if (this.students.some((student) => student._id === this.form._id)) {
+              this.errors._id = 'A student with this ID already exists.';
+              this.showToast('Duplicate student ID.', 'error', 'Use a unique identifier.');
+              return;
+            }
+            this.students = [...this.students, { ...this.form }];
+            this.showToast('Student added to roster.', 'success', 'Remember to sync with the SIS.');
+          }
+          this.closeModal();
+        },
+        deleteStudent(id) {
+          if (!window.confirm('Remove this student from the roster?')) {
+            return;
+          }
+          this.students = this.students.filter((student) => student._id !== id);
+          this.showToast('Student removed.', 'success', 'The change is reflected instantly.');
+        },
+        showToast(message, variant = 'success', detail = '') {
+          this.toast = { visible: true, message, variant, detail };
+          setTimeout(() => {
+            this.toast.visible = false;
+          }, 3200);
+        }
+      }));
+    });
+  </script>
+</body>
+</html>

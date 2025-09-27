@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enrollments · Student Mgmt</title>
+  <link rel="stylesheet" href="../style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-700" x-data="{ sidebarOpen: false }" x-on:keydown.escape.window="sidebarOpen = false">
+  <div class="flex min-h-screen">
+    <div x-cloak x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-30 bg-slate-900/40 md:hidden" aria-hidden="true" @click="sidebarOpen = false"></div>
+    <aside x-cloak x-show="sidebarOpen" x-transition:enter="transition transform duration-200" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition transform duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 md:static md:translate-x-0 md:block">
+      <div class="flex items-center gap-3 px-6 h-16 border-b border-slate-100">
+        <img src="../assets/logo.svg" alt="Student Management logo" class="h-9 w-9" />
+        <div>
+          <p class="text-sm uppercase tracking-widest text-slate-400">Student Mgmt</p>
+          <p class="text-base font-semibold text-slate-800">Admin Console</p>
+        </div>
+      </div>
+      <nav class="px-4 py-6 space-y-1 text-sm font-medium">
+        <a href="/" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 9.75 12 3l9 6.75V21a.75.75 0 0 1-.75.75H3.75A.75.75 0 0 1 3 21V9.75Z" /><path d="M9 21v-6h6v6" stroke-linecap="round" /></svg>
+          </span>
+          Dashboard
+        </a>
+        <a href="/pages/students.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" /><path d="M4.5 21a7.5 7.5 0 0 1 15 0" stroke-linecap="round" /></svg>
+          </span>
+          Students
+        </a>
+        <a href="/pages/courses.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 5.25h15" stroke-linecap="round" /><path d="M6 4.5h12A1.5 1.5 0 0 1 19.5 6v13.5a.75.75 0 0 1-.75.75H5.25a.75.75 0 0 1-.75-.75V6A1.5 1.5 0 0 1 6 4.5Z" /><path d="M9 9h6m-6 4.5h6" stroke-linecap="round" /></svg>
+          </span>
+          Courses
+        </a>
+        <a href="/pages/sections.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 6.75h15" stroke-linecap="round" /><path d="M4.5 12h15" stroke-linecap="round" /><path d="M4.5 17.25h15" stroke-linecap="round" /></svg>
+          </span>
+          Sections
+        </a>
+        <a href="/pages/enrollments.html" aria-current="page" class="flex items-center gap-3 rounded-xl px-3 py-2 bg-slate-900/5 text-slate-900">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 4.5h15v15h-15z" /><path d="M8.25 8.25h7.5v7.5h-7.5z" /><path d="M8.25 4.5v3.75M15.75 4.5v3.75M4.5 12h3.75m7.5 0H19.5M8.25 16.5V19.5m7.5-3v3" stroke-linecap="round" /></svg>
+          </span>
+          Enrollments
+        </a>
+      </nav>
+      <div class="mt-auto px-6 py-6 border-t border-slate-100 text-xs text-slate-500">
+        <p>Grade submission window <span class="font-semibold text-slate-700">May 8</span></p>
+        <p class="mt-1">Incomplete alerts <span class="font-semibold text-slate-700">2</span></p>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-h-screen">
+      <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div class="flex items-center justify-between px-4 sm:px-6 h-16">
+          <div class="flex items-center gap-3">
+            <button type="button" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900 md:hidden" @click="sidebarOpen = true" aria-label="Open navigation menu">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 7.5h15M4.5 12h15M4.5 16.5h15" stroke-linecap="round" /></svg>
+            </button>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-slate-400">Records</p>
+              <h1 class="text-lg font-semibold text-slate-900">Enrollments</h1>
+            </div>
+          </div>
+          <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+            <a href="/" class="hover:text-slate-900">Dashboard</a>
+            <a href="/pages/students.html" class="hover:text-slate-900">Students</a>
+            <a href="/pages/courses.html" class="hover:text-slate-900">Courses</a>
+            <a href="/pages/sections.html" class="hover:text-slate-900">Sections</a>
+            <a href="/pages/enrollments.html" class="text-slate-900">Enrollments</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="flex-1">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10" x-data="enrollmentsPage()">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 class="text-3xl font-semibold text-slate-900">Enrollment ledger</h2>
+              <p class="mt-2 text-slate-600">Monitor performance, identify grade risks, and manage grading deadlines.</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <button type="button" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-slate-300">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12" stroke-linecap="round" /><path d="M6 12h12" stroke-linecap="round" /></svg>
+                Create report
+              </button>
+              <button type="button" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5.25 15.75 12 9 18.75" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                Export grades
+              </button>
+            </div>
+          </div>
+
+          <section class="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div class="w-full md:max-w-sm">
+                <label for="enrollment-search" class="text-sm font-medium text-slate-700">Search enrollments</label>
+                <div class="mt-1 relative">
+                  <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="6" /><path d="m17 17 3.5 3.5" stroke-linecap="round" /></svg>
+                  </span>
+                  <input id="enrollment-search" type="search" x-model="search" placeholder="Search by student, section, or instructor" class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
+                </div>
+              </div>
+              <div class="flex flex-col gap-4 sm:flex-row">
+                <div>
+                  <label for="semester-filter" class="text-sm font-medium text-slate-700">Semester</label>
+                  <select id="semester-filter" x-model="selectedSemester" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                    <option value="">All semesters</option>
+                    <template x-for="semester in semesters" :key="semester">
+                      <option x-text="semester"></option>
+                    </template>
+                  </select>
+                </div>
+                <div>
+                  <label for="letter-filter" class="text-sm font-medium text-slate-700">Letter grade</label>
+                  <select id="letter-filter" x-model="selectedLetter" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                    <option value="">All</option>
+                    <template x-for="letter in letters" :key="letter">
+                      <option x-text="letter"></option>
+                    </template>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-xs text-slate-500">
+              <div class="flex items-center gap-2">
+                <input id="bulk-select" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-300" disabled />
+                <label for="bulk-select" class="font-medium text-slate-500">Bulk select (coming soon)</label>
+              </div>
+              <button type="button" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-400" disabled>
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.5 12h15" stroke-linecap="round" /><path d="M4.5 16.5h15" stroke-linecap="round" /><path d="M4.5 7.5h15" stroke-linecap="round" /></svg>
+                Apply bulk actions
+              </button>
+            </div>
+
+            <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-sm table-sticky-header">
+                  <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                    <tr>
+                      <th scope="col" class="px-4 py-3 font-semibold">Student</th>
+                      <th scope="col" class="px-4 py-3 font-semibold">Section</th>
+                      <th scope="col" class="px-4 py-3 font-semibold">Semester</th>
+                      <th scope="col" class="px-4 py-3 font-semibold">Midterm</th>
+                      <th scope="col" class="px-4 py-3 font-semibold">Final</th>
+                      <th scope="col" class="px-4 py-3 font-semibold">Bonus</th>
+                      <th scope="col" class="px-4 py-3 font-semibold">Letter</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 bg-white">
+                    <template x-for="record in filteredEnrollments" :key="record.id">
+                      <tr class="hover:bg-slate-50">
+                        <td class="px-4 py-3">
+                          <div class="font-medium text-slate-900" x-text="record.student_name"></div>
+                          <p class="text-xs text-slate-500" x-text="record.student_id"></p>
+                        </td>
+                        <td class="px-4 py-3">
+                          <div class="font-medium text-slate-900" x-text="record.section"></div>
+                          <p class="text-xs text-slate-500" x-text="record.course"></p>
+                        </td>
+                        <td class="px-4 py-3">
+                          <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700">
+                            <span class="h-2 w-2 rounded-full bg-slate-400"></span>
+                            <span x-text="record.semester"></span>
+                          </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-slate-700" x-text="record.midterm"></td>
+                        <td class="px-4 py-3 text-sm text-slate-700" x-text="record.final"></td>
+                        <td class="px-4 py-3 text-sm text-slate-700" x-text="record.bonus"></td>
+                        <td class="px-4 py-3">
+                          <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold" :class="badgeClass(record.letter)">
+                            <span x-text="record.letter"></span>
+                            <span class="hidden sm:inline" x-text="record.status"></span>
+                          </span>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <template x-if="filteredEnrollments.length === 0">
+              <div class="mt-6 flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 py-12 text-center">
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
+                  <svg class="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4.5 4.5h15v15h-15z" /><path d="M8.25 8.25h7.5v7.5h-7.5z" /><path d="M8.25 4.5v3.75M15.75 4.5v3.75M4.5 12h3.75m7.5 0H19.5M8.25 16.5V19.5m7.5-3v3" stroke-linecap="round" /></svg>
+                </span>
+                <div>
+                  <h3 class="text-lg font-semibold text-slate-900">No enrollment records</h3>
+                  <p class="mt-1 text-sm text-slate-500">Broaden your filters or refresh after instructors submit grades.</p>
+                </div>
+              </div>
+            </template>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const enrollmentSeed = [
+      { id: 'ENR-1', student_id: 'S-1001', student_name: 'Asha Patel', section: 'SEC-101', course: 'Data Structures', semester: '2025 Spring', midterm: 88, final: 93, bonus: 5, letter: 'A', status: 'Honors' },
+      { id: 'ENR-2', student_id: 'S-1002', student_name: 'Ethan Wright', section: 'SEC-103', course: 'Linear Algebra', semester: '2025 Spring', midterm: 76, final: 82, bonus: 2, letter: 'B', status: 'Passing' },
+      { id: 'ENR-3', student_id: 'S-1003', student_name: 'Lina Alvarez', section: 'SEC-104', course: 'Genetics', semester: '2025 Summer', midterm: 91, final: 89, bonus: 4, letter: 'A-', status: 'Dean list' },
+      { id: 'ENR-4', student_id: 'S-1004', student_name: 'Noah Kim', section: 'SEC-102', course: 'Operating Systems', semester: '2025 Spring', midterm: 68, final: 75, bonus: 3, letter: 'B-', status: 'Coaching' },
+      { id: 'ENR-5', student_id: 'S-1005', student_name: 'Maya Chen', section: 'SEC-105', course: 'Microeconomics', semester: '2025 Fall', midterm: 95, final: 97, bonus: 4, letter: 'A', status: 'Honors' },
+      { id: 'ENR-6', student_id: 'S-1006', student_name: 'Gabriel Souza', section: 'SEC-106', course: 'Quantum Mechanics', semester: '2025 Fall', midterm: 84, final: 80, bonus: 1, letter: 'B', status: 'Passing' },
+      { id: 'ENR-7', student_id: 'S-1007', student_name: 'Leah Johnson', section: 'SEC-101', course: 'Data Structures', semester: '2025 Spring', midterm: 92, final: 94, bonus: 3, letter: 'A', status: 'Honors' },
+      { id: 'ENR-8', student_id: 'S-1008', student_name: 'Omar Ali', section: 'SEC-105', course: 'Microeconomics', semester: '2025 Fall', midterm: 71, final: 78, bonus: 2, letter: 'B-', status: 'Coaching' },
+      { id: 'ENR-9', student_id: 'S-1009', student_name: 'Jules Laurent', section: 'SEC-107', course: 'Managerial Finance', semester: '2025 Fall', midterm: 66, final: 70, bonus: 0, letter: 'C+', status: 'Watch' },
+      { id: 'ENR-10', student_id: 'S-1010', student_name: 'Sara Ito', section: 'SEC-104', course: 'Genetics', semester: '2025 Summer', midterm: 89, final: 88, bonus: 2, letter: 'A-', status: 'Dean list' }
+    ];
+
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('enrollmentsPage', () => ({
+        enrollments: enrollmentSeed.map((record) => ({ ...record })),
+        search: '',
+        selectedSemester: '',
+        selectedLetter: '',
+        get semesters() {
+          return [...new Set(this.enrollments.map((record) => record.semester))];
+        },
+        get letters() {
+          return [...new Set(this.enrollments.map((record) => record.letter))];
+        },
+        get filteredEnrollments() {
+          const term = this.search.trim().toLowerCase();
+          return this.enrollments.filter((record) => {
+            const matchesSemester = this.selectedSemester ? record.semester === this.selectedSemester : true;
+            const matchesLetter = this.selectedLetter ? record.letter === this.selectedLetter : true;
+            const matchesSearch = term
+              ? [record.student_name, record.student_id, record.section, record.course].some((value) =>
+                  (value || '').toLowerCase().includes(term)
+                )
+              : true;
+            return matchesSemester && matchesLetter && matchesSearch;
+          });
+        },
+        badgeClass(letter) {
+          const palette = {
+            A: 'bg-emerald-100 text-emerald-700',
+            'A-': 'bg-emerald-50 text-emerald-700',
+            B: 'bg-sky-100 text-sky-700',
+            'B-': 'bg-sky-50 text-sky-700',
+            'C+': 'bg-amber-100 text-amber-800'
+          };
+          return palette[letter] || 'bg-slate-100 text-slate-700';
+        }
+      }));
+    });
+  </script>
+</body>
+</html>

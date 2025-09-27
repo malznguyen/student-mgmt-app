@@ -1,0 +1,41 @@
+/* Custom utilities complementing Tailwind */
+[x-cloak] { display: none !important; }
+
+html { color-scheme: light; }
+
+::-webkit-scrollbar {
+  width: 0.5rem;
+  height: 0.5rem;
+}
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.7);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(100, 116, 139, 0.85);
+}
+
+.table-sticky-header thead th {
+  position: sticky;
+  top: 0;
+  background-color: rgb(248 250 252 / 0.95);
+  backdrop-filter: blur(4px);
+}
+
+.shadow-smooth {
+  box-shadow: 0 10px 30px -15px rgba(15, 23, 42, 0.25);
+}
+
+.skeleton-line {
+  background: linear-gradient(90deg, rgba(226,232,240,0.6) 25%, rgba(241,245,249,0.9) 50%, rgba(226,232,240,0.6) 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
