@@ -297,17 +297,6 @@
   </div>
 
   <script>
-    const studentSeed = [
-      { _id: 'S-1001', full_name: 'Asha Patel', email: 'asha.patel@example.edu', major_dept_id: 'CS', year: '2025', pronouns: 'she/her' },
-      { _id: 'S-1002', full_name: 'Ethan Wright', email: 'ethan.wright@example.edu', major_dept_id: 'MATH', year: '2026', pronouns: 'he/him' },
-      { _id: 'S-1003', full_name: 'Lina Alvarez', email: 'lina.alvarez@example.edu', major_dept_id: 'BIO', year: '2025', pronouns: 'she/they' },
-      { _id: 'S-1004', full_name: 'Noah Kim', email: 'noah.kim@example.edu', major_dept_id: 'CS', year: '2027', pronouns: 'he/him' },
-      { _id: 'S-1005', full_name: 'Maya Chen', email: 'maya.chen@example.edu', major_dept_id: 'ECON', year: '2024', pronouns: 'she/her' },
-      { _id: 'S-1006', full_name: 'Gabriel Souza', email: 'gabriel.souza@example.edu', major_dept_id: 'PHYS', year: '2026', pronouns: 'he/him' },
-      { _id: 'S-1007', full_name: 'Leah Johnson', email: 'leah.johnson@example.edu', major_dept_id: 'CS', year: '2025', pronouns: 'she/her' },
-      { _id: 'S-1008', full_name: 'Omar Ali', email: 'omar.ali@example.edu', major_dept_id: 'ECON', year: '2027', pronouns: 'he/him' }
-    ];
-
     const departmentOptions = [
       { id: 'CS', name: 'Computer Science' },
       { id: 'MATH', name: 'Mathematics' },
@@ -339,18 +328,38 @@
           const term = this.search.toLowerCase();
           return this.students.filter((student) => {
             return [student._id, student.full_name, student.email, this.departmentMap[student.major_dept_id]].some((value) =>
-              (value || '').toLowerCase().includes(term)
+              String(value || '').toLowerCase().includes(term)
             );
           });
         },
         get classYears() {
-          return new Set(this.students.map((student) => student.year)).size;
+          return new Set(this.students.map((student) => student.year).filter(Boolean)).size;
         },
         init() {
-          setTimeout(() => {
-            this.students = studentSeed.map((student) => ({ ...student }));
+          this.fetchStudents();
+        },
+        async fetchStudents() {
+          this.loading = true;
+          try {
+            const response = await fetch('/api/students');
+            if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
+            const payload = await response.json();
+            if (!Array.isArray(payload)) throw new Error('Unexpected response payload');
+            this.students = payload.map((student) => ({
+              _id: student._id ?? '',
+              full_name: student.full_name ?? '',
+              email: student.email ?? '',
+              major_dept_id: student.major_dept_id ?? '',
+              year: student.year ?? '',
+              pronouns: student.pronouns ?? ''
+            }));
+          } catch (error) {
+            console.error('Failed to load students', error);
+            this.students = [];
+            this.showToast('Unable to load students.', 'error', 'Please refresh or try again later.');
+          } finally {
             this.loading = false;
-          }, 500);
+          }
         },
         openCreate() {
           this.isEditing = false;
