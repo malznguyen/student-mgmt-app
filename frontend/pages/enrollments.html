@@ -109,12 +109,12 @@
           <section class="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div class="w-full md:max-w-sm">
-                <label for="enrollment-search" class="text-sm font-medium text-slate-700">Search enrollments</label>
+                <label for="enrollment-search" class="text-sm font-medium text-slate-700">Search by ID</label>
                 <div class="mt-1 relative">
                   <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="6" /><path d="m17 17 3.5 3.5" stroke-linecap="round" /></svg>
                   </span>
-                  <input id="enrollment-search" type="search" x-model="search" placeholder="Search by student, section, or instructor" class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
+                  <input id="enrollment-search" type="search" x-model="search" placeholder="Search student or section ID" class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
                 </div>
               </div>
               <div class="flex flex-col gap-4 sm:flex-row">
@@ -124,15 +124,6 @@
                     <option value="">All semesters</option>
                     <template x-for="semester in semesters" :key="semester">
                       <option x-text="semester"></option>
-                    </template>
-                  </select>
-                </div>
-                <div>
-                  <label for="letter-filter" class="text-sm font-medium text-slate-700">Letter grade</label>
-                  <select id="letter-filter" x-model="selectedLetter" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
-                    <option value="">All</option>
-                    <template x-for="letter in letters" :key="letter">
-                      <option x-text="letter"></option>
                     </template>
                   </select>
                 </div>
@@ -200,12 +191,10 @@
                         <template x-for="record in filteredEnrollments" :key="record._id">
                           <tr class="hover:bg-slate-50">
                             <td class="px-4 py-3">
-                              <div class="font-medium text-slate-900" x-text="record.student_name || record.student_id"></div>
-                              <p class="text-xs text-slate-500" x-text="record.student_id"></p>
+                              <div class="font-medium text-slate-900" x-text="record.student_id"></div>
                             </td>
                             <td class="px-4 py-3">
-                              <div class="font-medium text-slate-900" x-text="record.course_title || record.section_id"></div>
-                              <p class="text-xs text-slate-500" x-text="record.section_label"></p>
+                              <div class="font-medium text-slate-900" x-text="record.section_id"></div>
                             </td>
                             <td class="px-4 py-3">
                               <span class="inline-flex items-center gap-2 rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700">
@@ -293,24 +282,12 @@
         <div class="grid gap-5 sm:grid-cols-2">
           <div>
             <label for="enrollment-student" class="text-sm font-medium text-slate-700">Student</label>
-            <select id="enrollment-student" x-model="form.student_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.student_id ? 'border-rose-300' : 'border-slate-200'" required>
-              <option value="" disabled>Select student</option>
-              <template x-for="student in studentOptions" :key="student._id">
-                <option :value="student._id" x-text="`${student.full_name} (${student._id})`"></option>
-              </template>
-            </select>
-            <p class="mt-1 text-xs text-slate-500" x-show="!studentOptions.length">Load students from the roster to enable selection.</p>
+            <input id="enrollment-student" type="text" x-model="form.student_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.student_id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. S-2001" required />
             <p x-show="errors.student_id" x-text="errors.student_id" class="mt-1 text-xs font-medium text-rose-600"></p>
           </div>
           <div>
             <label for="enrollment-section" class="text-sm font-medium text-slate-700">Section</label>
-            <select id="enrollment-section" x-model="form.section_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.section_id ? 'border-rose-300' : 'border-slate-200'" required @change="syncSemester()">
-              <option value="" disabled>Select section</option>
-              <template x-for="section in sectionOptions" :key="section._id">
-                <option :value="section._id" x-text="section.label"></option>
-              </template>
-            </select>
-            <p class="mt-1 text-xs text-slate-500" x-show="currentSectionInfo" x-text="currentSectionInfo"></p>
+            <input id="enrollment-section" type="text" x-model="form.section_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.section_id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. CS101_2025A_01" required />
             <p x-show="errors.section_id" x-text="errors.section_id" class="mt-1 text-xs font-medium text-rose-600"></p>
           </div>
         </div>
@@ -342,8 +319,8 @@
           <div>
             <label class="text-sm font-medium text-slate-700">Letter grade</label>
             <div class="mt-1 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
-              <span x-text="form.letter || '—'"></span>
-              <span class="text-xs text-slate-500" x-text="currentLetterPreview ? `Preview: ${currentLetterPreview}` : 'Preview unavailable'" ></span>
+              <span x-text="form.letter || currentGradePreview.letter || '—'"></span>
+              <span class="text-xs text-slate-500" x-text="currentGradePreview.letter ? `Preview: ${currentGradePreview.letter} (${currentGradePreview.total})` : 'Preview updates as scores are added.'"></span>
             </div>
           </div>
         </div>
@@ -363,13 +340,10 @@
     document.addEventListener('alpine:init', () => {
       Alpine.data('enrollmentsPage', () => ({
         enrollments: [],
-        students: [],
-        sections: [],
         loading: true,
         loadError: '',
         search: '',
         selectedSemester: '',
-        selectedLetter: '',
         modalOpen: false,
         isEditing: false,
         saving: false,
@@ -387,46 +361,23 @@
           letter: ''
         },
         errors: {},
-        get studentOptions() {
-          return [...this.students].sort((a, b) => a.full_name.localeCompare(b.full_name));
-        },
-        get sectionOptions() {
-          return [...this.sections].sort((a, b) => a.label.localeCompare(b.label));
-        },
-        get sectionMap() {
-          return this.sections.reduce((acc, section) => {
-            acc[section._id] = section;
-            return acc;
-          }, {});
-        },
         get semesters() {
           return [...new Set(this.enrollments.map((record) => record.semester).filter(Boolean))].sort();
-        },
-        get letters() {
-          return [...new Set(this.enrollments.map((record) => record.letter).filter(Boolean))].sort();
         },
         get filteredEnrollments() {
           const term = this.search.trim().toLowerCase();
           return this.enrollments.filter((record) => {
             const matchesSemester = this.selectedSemester ? record.semester === this.selectedSemester : true;
-            const matchesLetter = this.selectedLetter ? record.letter === this.selectedLetter : true;
             const matchesSearch = term
-              ? [record.student_name, record.student_id, record.section_label, record.course_title]
-                  .some((value) => String(value || '').toLowerCase().includes(term))
+              ? [record.student_id, record.section_id].some((value) =>
+                  String(value || '').toLowerCase().includes(term)
+                )
               : true;
-            return matchesSemester && matchesLetter && matchesSearch;
+            return matchesSemester && matchesSearch;
           });
         },
-        get currentSectionInfo() {
-          const section = this.sectionMap[this.form.section_id];
-          if (!section) return '';
-          const parts = [section.title];
-          if (section.semester) parts.push(section.semester);
-          if (section.section_no) parts.push(`Sec ${section.section_no}`);
-          return parts.join(' • ');
-        },
-        get currentLetterPreview() {
-          return this.calculateLetter(this.form.midterm, this.form.final, this.form.bonus);
+        get currentGradePreview() {
+          return this.calculatePreview(this.form.midterm, this.form.final, this.form.bonus);
         },
         init() {
           this.loadData();
@@ -435,22 +386,7 @@
           this.loading = true;
           this.loadError = '';
           try {
-            const [enrollments, students, sections] = await Promise.all([
-              this.requestEnrollments(),
-              this.requestStudents().catch((error) => {
-                console.error('Failed to load students', error);
-                this.showToast('Unable to load student list.', 'error', 'Student dropdown may be incomplete.');
-                return [];
-              }),
-              this.requestSections().catch((error) => {
-                console.error('Failed to load sections', error);
-                this.showToast('Unable to load sections.', 'error', 'Section dropdown may be incomplete.');
-                return [];
-              })
-            ]);
-            this.enrollments = enrollments;
-            this.students = students;
-            this.sections = sections;
+            this.enrollments = await this.requestEnrollments();
           } catch (error) {
             console.error('Failed to load enrollments', error);
             this.enrollments = [];
@@ -470,44 +406,12 @@
           return payload.map((record) => ({
             _id: record._id ?? `${record.student_id}:${record.section_id}`,
             student_id: record.student_id ?? '',
-            student_name: record.student_name ?? '',
             section_id: record.section_id ?? '',
-            section_label: record.section_no ? `${record.section_id} · Sec ${record.section_no}` : record.section_id ?? '',
-            course_title: record.course_title ?? '',
             semester: record.semester ?? '',
-            midterm: record.midterm != null ? Number(record.midterm) : '',
-            final: record.final != null ? Number(record.final) : '',
-            bonus: record.bonus != null ? Number(record.bonus) : '',
+            midterm: record.midterm != null ? Number(record.midterm) : null,
+            final: record.final != null ? Number(record.final) : null,
+            bonus: record.bonus != null ? Number(record.bonus) : null,
             letter: record.letter ?? ''
-          }));
-        },
-        async requestStudents() {
-          const response = await fetch('/api/students?limit=500');
-          const payload = await response.json().catch(() => null);
-          if (!response.ok || !Array.isArray(payload)) {
-            const message = (payload && payload.error) || `Request failed with status ${response.status}`;
-            throw new Error(message);
-          }
-          return payload.map((student) => ({
-            _id: student._id ?? '',
-            full_name: student.full_name ?? student._id ?? ''
-          }));
-        },
-        async requestSections() {
-          const response = await fetch('/api/sections');
-          const payload = await response.json().catch(() => null);
-          if (!response.ok || !Array.isArray(payload)) {
-            const message = (payload && payload.error) || `Request failed with status ${response.status}`;
-            throw new Error(message);
-          }
-          return payload.map((section) => ({
-            _id: section._id ?? '',
-            title: section.course_title ?? section.course_id ?? '',
-            semester: section.semester ?? '',
-            section_no: section.section_no ?? '',
-            label: section.course_title
-              ? `${section.course_title} (${section._id})`
-              : section._id ?? ''
           }));
         },
         async refreshEnrollments() {
@@ -536,9 +440,9 @@
             student_id: record.student_id,
             section_id: record.section_id,
             semester: record.semester,
-            midterm: record.midterm === '' ? '' : Number(record.midterm),
-            final: record.final === '' ? '' : Number(record.final),
-            bonus: record.bonus === '' ? '' : Number(record.bonus),
+            midterm: record.midterm == null ? '' : Number(record.midterm),
+            final: record.final == null ? '' : Number(record.final),
+            bonus: record.bonus == null ? '' : Number(record.bonus),
             letter: record.letter || ''
           };
           this.errors = {};
@@ -560,39 +464,39 @@
           };
           this.errors = {};
         },
-        syncSemester() {
-          const section = this.sectionMap[this.form.section_id];
-          if (section && section.semester) {
-            this.form.semester = section.semester;
-          }
-        },
         validate() {
           const nextErrors = {};
-          if (!this.form.student_id) nextErrors.student_id = 'Select a student.';
-          if (!this.form.section_id) nextErrors.section_id = 'Select a section.';
+          if (!this.form.student_id.trim()) nextErrors.student_id = 'Student ID is required.';
+          if (!this.form.section_id.trim()) nextErrors.section_id = 'Section ID is required.';
           if (!this.form.semester.trim()) nextErrors.semester = 'Semester is required.';
-          if (this.form.midterm !== '' && Number.isNaN(Number(this.form.midterm))) {
-            nextErrors.midterm = 'Midterm must be a number.';
-          }
-          if (this.form.final !== '' && Number.isNaN(Number(this.form.final))) {
-            nextErrors.final = 'Final must be a number.';
-          }
-          if (this.form.bonus !== '' && Number.isNaN(Number(this.form.bonus))) {
-            nextErrors.bonus = 'Bonus must be a number.';
-          }
+          const numericFields = [
+            { key: 'midterm', min: 0, max: 10, label: 'Midterm' },
+            { key: 'final', min: 0, max: 10, label: 'Final' },
+            { key: 'bonus', min: 0, max: 2, label: 'Bonus' }
+          ];
+          numericFields.forEach(({ key, min, max, label }) => {
+            const value = this.form[key];
+            if (value === '' || value === null || value === undefined) return;
+            const numberValue = Number(value);
+            if (Number.isNaN(numberValue)) {
+              nextErrors[key] = `${label} must be a number.`;
+            } else if (numberValue < min || numberValue > max) {
+              nextErrors[key] = `${label} must be between ${min} and ${max}.`;
+            }
+          });
           this.errors = nextErrors;
           return Object.keys(nextErrors).length === 0;
         },
         buildPayload() {
-          const payload = {
-            student_id: this.form.student_id,
-            section_id: this.form.section_id,
+          const sanitizeNumber = (value) => (value === '' || value === null || value === undefined ? null : Number(value));
+          return {
+            student_id: this.form.student_id.trim(),
+            section_id: this.form.section_id.trim(),
             semester: this.form.semester.trim().toUpperCase(),
-            midterm: this.form.midterm === '' ? null : Number(this.form.midterm),
-            final: this.form.final === '' ? null : Number(this.form.final),
-            bonus: this.form.bonus === '' ? null : Number(this.form.bonus)
+            midterm: sanitizeNumber(this.form.midterm),
+            final: sanitizeNumber(this.form.final),
+            bonus: sanitizeNumber(this.form.bonus)
           };
-          return payload;
         },
         async saveEnrollment() {
           if (!this.validate()) {
@@ -606,6 +510,7 @@
           const url = this.isEditing
             ? `/api/enrollments/${encodeURIComponent(this.form._id)}`
             : '/api/enrollments';
+          const preview = this.calculatePreview(payload.midterm, payload.final, payload.bonus);
 
           try {
             const response = await fetch(url, {
@@ -615,25 +520,22 @@
             });
             const result = await response.json().catch(() => null);
 
-            if (!response.ok || !result) {
-              const details = (result && result.details) || {};
-              this.errors = details;
+            if (!response.ok || !result || result.error) {
+              this.errors = (result && result.details) || {};
               const detailMessage =
-                details.student_id ||
-                details.section_id ||
-                details.semester ||
-                Object.values(details)[0] || '';
+                this.errors.student_id ||
+                this.errors.section_id ||
+                this.errors.semester ||
+                (result && result.error) ||
+                '';
               this.showToast((result && result.error) || 'Unable to save enrollment.', 'error', detailMessage);
               return;
             }
 
             await this.refreshEnrollments();
             this.closeModal();
-            this.showToast(
-              this.isEditing ? 'Enrollment updated successfully.' : 'Enrollment created successfully.',
-              'success',
-              result.letter ? `Assigned letter grade: ${result.letter}` : ''
-            );
+            const detail = preview.letter ? `Preview letter: ${preview.letter} (${preview.total})` : '';
+            this.showToast(this.isEditing ? 'Enrollment updated.' : 'Enrollment created.', 'success', detail);
           } catch (error) {
             console.error('Failed to save enrollment', error);
             this.showToast('Unable to save enrollment.', 'error', 'Check your network connection.');
@@ -653,7 +555,7 @@
             });
             const result = await response.json().catch(() => null);
 
-            if (!response.ok || !result || !result.deleted) {
+            if (!response.ok || !result || !result.ok) {
               this.showToast(
                 (result && result.error) || 'Unable to delete enrollment.',
                 'error',
@@ -663,7 +565,7 @@
             }
 
             this.enrollments = this.enrollments.filter((record) => record._id !== id);
-            this.showToast('Enrollment removed.', 'success', 'Student no longer appears in this section.');
+            this.showToast('Enrollment deleted.', 'success', 'Record removed from the roster.');
           } catch (error) {
             console.error('Failed to delete enrollment', error);
             this.showToast('Unable to delete enrollment.', 'error', 'Check your network connection.');
@@ -672,63 +574,46 @@
           }
         },
         badgeClass(letter) {
-          const palette = {
-            A: 'bg-emerald-100 text-emerald-700',
-            'A-': 'bg-emerald-50 text-emerald-700',
-            'B+': 'bg-sky-100 text-sky-700',
-            B: 'bg-sky-50 text-sky-700',
-            'B-': 'bg-blue-50 text-blue-700',
-            'C+': 'bg-amber-100 text-amber-800',
-            C: 'bg-amber-50 text-amber-700',
-            'D+': 'bg-rose-100 text-rose-700',
-            D: 'bg-rose-50 text-rose-700',
-            F: 'bg-rose-100 text-rose-700'
-          };
-          return palette[letter] || 'bg-slate-100 text-slate-700';
+          if (!letter) return 'bg-slate-100 text-slate-700';
+          if (letter === 'F') return 'bg-rose-100 text-rose-700';
+          if (letter.startsWith('A')) return 'bg-emerald-100 text-emerald-700';
+          if (letter.startsWith('B')) return 'bg-sky-100 text-sky-700';
+          return 'bg-amber-100 text-amber-800';
         },
         letterStatus(letter) {
           if (!letter) return 'Pending';
-          if (letter.startsWith('A')) return 'Honors';
+          if (letter.startsWith('A')) return 'Strong performance';
           if (letter.startsWith('B')) return 'On track';
-          if (letter.startsWith('C')) return 'Watch';
-          if (letter.startsWith('D')) return 'At risk';
-          if (letter === 'F') return 'Failing';
-          return 'Recorded';
+          if (letter === 'F') return 'At risk';
+          return 'Monitor closely';
         },
         formatScore(value) {
           if (value === '' || value === null || Number.isNaN(value)) return '—';
           const numberValue = Number(value);
-          return Number.isInteger(numberValue) ? numberValue : numberValue.toFixed(1);
+          return numberValue.toFixed(2).replace(/\.?0+$/, '');
         },
-        calculateLetter(midterm, final, bonus) {
-          const mid = midterm === '' || midterm === null ? null : Number(midterm);
-          const fin = final === '' || final === null ? null : Number(final);
-          const extra = bonus === '' || bonus === null ? 0 : Number(bonus);
-          const scores = [];
-          if (mid != null && !Number.isNaN(mid)) scores.push({ score: mid, weight: 0.4 });
-          if (fin != null && !Number.isNaN(fin)) scores.push({ score: fin, weight: 0.6 });
-          if (!scores.length) return '';
-          let totalWeight = scores.reduce((sum, entry) => sum + entry.weight, 0);
-          if (totalWeight === 0) return '';
-          let weighted = scores.reduce((sum, entry) => sum + entry.score * entry.weight, 0) / totalWeight;
-          weighted = Math.max(0, Math.min(100, weighted + extra));
-          const scale = [
-            { min: 97, grade: 'A+' },
-            { min: 93, grade: 'A' },
-            { min: 90, grade: 'A-' },
-            { min: 87, grade: 'B+' },
-            { min: 83, grade: 'B' },
-            { min: 80, grade: 'B-' },
-            { min: 77, grade: 'C+' },
-            { min: 73, grade: 'C' },
-            { min: 70, grade: 'C-' },
-            { min: 67, grade: 'D+' },
-            { min: 63, grade: 'D' },
-            { min: 60, grade: 'D-' },
-            { min: 0, grade: 'F' }
-          ];
-          const match = scale.find((entry) => weighted >= entry.min);
-          return match ? match.grade : '';
+        calculatePreview(midterm, final, bonus) {
+          const mid = midterm === '' || midterm === null || midterm === undefined ? null : Number(midterm);
+          const fin = final === '' || final === null || final === undefined ? null : Number(final);
+          const extra = bonus === '' || bonus === null || bonus === undefined ? 0 : Number(bonus);
+          if (mid === null || fin === null || Number.isNaN(mid) || Number.isNaN(fin)) {
+            return { letter: '', total: null };
+          }
+          let total = 0.4 * mid + 0.6 * fin + (Number.isNaN(extra) ? 0 : extra);
+          total = Math.max(0, Math.min(total, 10));
+          total = Math.round(total * 100) / 100;
+          let letter = '';
+          if (total >= 8.5) letter = 'A';
+          else if (total >= 8.0) letter = 'A-';
+          else if (total >= 7.5) letter = 'B+';
+          else if (total >= 7.0) letter = 'B';
+          else if (total >= 6.5) letter = 'B-';
+          else if (total >= 6.0) letter = 'C+';
+          else if (total >= 5.5) letter = 'C';
+          else if (total >= 5.0) letter = 'D';
+          else letter = 'F';
+          const displayTotal = total.toFixed(2).replace(/\.?0+$/, '');
+          return { letter, total: displayTotal };
         },
         showToast(message, variant = 'success', detail = '') {
           if (this.toastTimeout) {

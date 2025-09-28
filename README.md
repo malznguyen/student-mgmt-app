@@ -147,8 +147,46 @@ curl -X PUT http://localhost:5000/api/sections/CS210_2025B_01 \
 curl -X DELETE http://localhost:5000/api/sections/CS210_2025B_01
 ```
 
+## Enrollments API
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET    | `/api/enrollments` | List enrollments. Supports `student_id`, `section_id`, `semester`, and `limit` (defaults to 200). |
+| POST   | `/api/enrollments` | Create an enrollment. Requires `student_id`, `section_id`, and `semester`. Optional `midterm`, `final`, and `bonus` scores compute the letter grade using the 0–10 scale (`0.4*midterm + 0.6*final + bonus`, capped at 10). Validates that the student and section exist for the semester. |
+| PUT    | `/api/enrollments/<id>` | Update `midterm`, `final`, `bonus`, `semester`, or `section_id`. Recomputes the letter grade when scores change. |
+| DELETE | `/api/enrollments/<id>` | Remove an enrollment record. |
+
+Missing students/sections respond with HTTP 404, duplicate `student_id` + `section_id` pairs respond with HTTP 409, and MongoDB outages respond with HTTP 503 and an `error` message.
+
+### Sample cURL
+
+```bash
+# Create an enrollment with initial scores
+curl -X POST http://localhost:5000/api/enrollments \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "student_id": "S-2001",
+    "section_id": "CS101_2025A_01",
+    "semester": "2025A",
+    "midterm": 8.8,
+    "final": 9.2,
+    "bonus": 0.5
+  }'
+
+# Update the final score (recalculates the letter grade)
+curl -X PUT http://localhost:5000/api/enrollments/<enrollment_id> \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "final": 9.4,
+    "bonus": 0.8
+  }'
+
+# Delete an enrollment
+curl -X DELETE http://localhost:5000/api/enrollments/<enrollment_id>
+```
+
 ## Seeding
 
-`python scripts/seed.py` clears the configured collections and loads `scripts/seed.json`, which now contains sample students, seven catalog courses, **and** eight ready-to-use class sections. Run it any time you want to reset the roster, catalog, and schedule data.
+`python scripts/seed.py` clears the configured collections and loads `scripts/seed.json`, which now contains sample students, seven catalog courses, eight ready-to-use class sections, and ten example enrollments with precomputed grades. Run it any time you want to reset the roster, catalog, and schedule data.
 
 > **Reminder:** keep `backend/.env` out of source control.

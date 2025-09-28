@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Tuple
 
 from flask import Flask, jsonify, request, send_from_directory
 from pymongo.errors import DuplicateKeyError, PyMongoError
+from bson import ObjectId
+from bson.errors import InvalidId
 
 from src.config import ConfigError
 from src.db import (
@@ -68,45 +70,29 @@ def _parse_limit_arg(
 def _calculate_letter_grade(
     midterm: float | None, final: float | None, bonus: float | None
 ) -> str | None:
-    scores: List[Tuple[float, float]] = []
-    if midterm is not None:
-        scores.append((midterm, 0.4))
-    if final is not None:
-        scores.append((final, 0.6))
-
-    if not scores:
+    if midterm is None or final is None:
         return None
 
-    total_weight = sum(weight for _, weight in scores)
-    if total_weight == 0:
-        return None
+    bonus_value = bonus or 0.0
+    total = 0.4 * midterm + 0.6 * final + bonus_value
+    total = max(0.0, min(total, 10.0))
+    total = round(total, 2)
 
-    weighted_score = sum(score * weight for score, weight in scores) / total_weight
-    if bonus is not None:
-        weighted_score += bonus
-
-    weighted_score = max(0.0, min(100.0, weighted_score))
-
-    grade_scale = [
-        (97, "A+"),
-        (93, "A"),
-        (90, "A-"),
-        (87, "B+"),
-        (83, "B"),
-        (80, "B-"),
-        (77, "C+"),
-        (73, "C"),
-        (70, "C-"),
-        (67, "D+"),
-        (63, "D"),
-        (60, "D-"),
-        (0, "F"),
+    grade_scale: List[Tuple[float, str]] = [
+        (8.5, "A"),
+        (8.0, "A-"),
+        (7.5, "B+"),
+        (7.0, "B"),
+        (6.5, "B-"),
+        (6.0, "C+"),
+        (5.5, "C"),
+        (5.0, "D"),
     ]
 
     for threshold, letter in grade_scale:
-        if weighted_score >= threshold:
+        if total >= threshold:
             return letter
-    return None
+    return "F"
 
 
 def _validate_student_payload(
@@ -310,12 +296,6 @@ def _validate_enrollment_payload(
             return False
         return True
 
-    if require_all or "_id" in payload:
-        if "_id" in payload and payload.get("_id") not in (None, ""):
-            cleaned["_id"] = _clean_string(payload.get("_id"))
-        elif require_all:
-            errors["_id"] = "Enrollment ID is required."
-
     if require_all or "student_id" in payload:
         if require_field("student_id", "Student ID is required."):
             cleaned["student_id"] = _clean_string(payload.get("student_id"))
@@ -328,16 +308,33 @@ def _validate_enrollment_payload(
         if require_field("semester", "Semester is required."):
             cleaned["semester"] = _clean_string(payload.get("semester")).upper()
 
-    for field in ("midterm", "final", "bonus"):
-        if field in payload and payload.get(field) not in (None, ""):
-            try:
-                cleaned[field] = float(payload.get(field))
-            except (TypeError, ValueError):
-                errors[field] = "Scores must be numeric."
-        elif field in payload:
-            cleaned[field] = None
+    score_ranges = {
+        "midterm": (0.0, 10.0),
+        "final": (0.0, 10.0),
+        "bonus": (0.0, 2.0),
+    }
 
-    cleaned = {k: v for k, v in cleaned.items() if v is not None}
+    for field, (minimum, maximum) in score_ranges.items():
+        if field not in payload:
+            continue
+
+        value = payload.get(field)
+        if value in (None, ""):
+            cleaned[field] = None
+            continue
+
+        try:
+            numeric_value = float(value)
+        except (TypeError, ValueError):
+            errors[field] = "Scores must be numeric."
+            continue
+
+        if numeric_value < minimum or numeric_value > maximum:
+            errors[field] = f"{field.capitalize()} must be between {minimum:g} and {maximum:g}."
+            continue
+
+        cleaned[field] = round(numeric_value, 2)
+
     return cleaned, errors
 
 
@@ -771,9 +768,23 @@ def _ensure_student_exists(student_id: str) -> bool:
     return bool(collection.find_one({"_id": student_id}, projection={"_id": 1}))
 
 
-def _ensure_section_exists(section_id: str) -> bool:
+def _candidate_enrollment_filters(enrollment_id: str) -> List[Dict[str, Any]]:
+    filters: List[Dict[str, Any]] = [{"_id": enrollment_id}]
+    try:
+        filters.append({"_id": ObjectId(enrollment_id)})
+    except (InvalidId, TypeError):
+        pass
+    return filters
+
+
+def _ensure_section_exists(section_id: str, semester: str) -> bool:
     collection = get_sections_collection()
-    return bool(collection.find_one({"_id": section_id}, projection={"_id": 1, "semester": 1}))
+    return bool(
+        collection.find_one(
+            {"_id": section_id, "semester": semester},
+            projection={"_id": 1},
+        )
+    )
 
 
 @app.get("/api/enrollments")
@@ -785,6 +796,7 @@ def list_enrollments():
         student_id = _clean_string(request.args.get("student_id"))
         section_id = _clean_string(request.args.get("section_id"))
         semester = _clean_string(request.args.get("semester"))
+        limit_arg = _clean_string(request.args.get("limit"))
 
         if student_id:
             filters["student_id"] = student_id
@@ -792,72 +804,16 @@ def list_enrollments():
             filters["section_id"] = section_id
         if semester:
             filters["semester"] = semester.upper()
+        try:
+            limit_value = _parse_limit_arg(limit_arg, default=200)
+        except ValueError as exc:
+            return _json_error(str(exc), 400)
 
-        documents = list(
-            collection.find(
-                filters,
-                sort=[("semester", -1), ("student_id", 1)],
-            )
-        )
+        cursor = collection.find(filters, sort=[("semester", -1), ("student_id", 1)])
+        if limit_value is not None:
+            cursor = cursor.limit(limit_value)
 
-        student_ids = {doc.get("student_id") for doc in documents if doc.get("student_id")}
-        section_ids = {doc.get("section_id") for doc in documents if doc.get("section_id")}
-
-        students_map: Dict[str, Dict[str, Any]] = {}
-        sections_map: Dict[str, Dict[str, Any]] = {}
-        courses_map: Dict[str, Dict[str, Any]] = {}
-
-        if student_ids:
-            students_cursor = get_students_collection().find(
-                {"_id": {"$in": list(student_ids)}},
-                projection={"_id": 1, "full_name": 1},
-            )
-            students_map = {doc["_id"]: doc for doc in students_cursor}
-
-        if section_ids:
-            sections_cursor = get_sections_collection().find(
-                {"_id": {"$in": list(section_ids)}},
-                projection={
-                    "_id": 1,
-                    "course_id": 1,
-                    "semester": 1,
-                    "section_no": 1,
-                    "instructor_id": 1,
-                },
-            )
-            sections_map = {doc["_id"]: doc for doc in sections_cursor}
-
-        course_ids = {
-            section.get("course_id")
-            for section in sections_map.values()
-            if section.get("course_id")
-        }
-        if course_ids:
-            courses_cursor = get_courses_collection().find(
-                {"_id": {"$in": list(course_ids)}},
-                projection={"_id": 1, "title": 1, "dept_id": 1},
-            )
-            courses_map = {doc["_id"]: doc for doc in courses_cursor}
-
-        payload: List[Dict[str, Any]] = []
-        for doc in documents:
-            serialized = serialize_enrollment(doc)
-            student = students_map.get(serialized["student_id"])
-            section = sections_map.get(serialized["section_id"])
-            course = courses_map.get(section.get("course_id")) if section else None
-
-            serialized["student_name"] = student.get("full_name") if student else None
-            if section:
-                serialized["course_id"] = section.get("course_id")
-                serialized["section_no"] = section.get("section_no")
-                serialized["instructor_id"] = section.get("instructor_id")
-                serialized.setdefault("semester", section.get("semester"))
-            if course:
-                serialized["course_title"] = course.get("title")
-                serialized["course_dept_id"] = course.get("dept_id")
-
-            payload.append(serialized)
-
+        payload = [serialize_enrollment(doc) for doc in cursor]
         return jsonify(payload)
     except ConfigError as exc:
         return _handle_config_error(exc)
@@ -876,47 +832,32 @@ def create_enrollment():
 
     try:
         if not _ensure_student_exists(cleaned["student_id"]):
-            return _json_error("Student not found for enrollment.", 400, {"student_id": "Select an existing student."})
-        if not _ensure_section_exists(cleaned["section_id"]):
-            return _json_error("Section not found for enrollment.", 400, {"section_id": "Select an existing section."})
+            return _json_error("Student not found.", 404)
 
-        if "_id" not in cleaned or not cleaned["_id"]:
-            cleaned["_id"] = f"{cleaned['student_id']}:{cleaned['section_id']}"
+        if not _ensure_section_exists(cleaned["section_id"], cleaned["semester"]):
+            return _json_error("Class section not found for the specified semester.", 404)
+
+        document: Dict[str, Any] = {
+            "student_id": cleaned["student_id"],
+            "section_id": cleaned["section_id"],
+            "semester": cleaned["semester"],
+        }
+
+        for field in ("midterm", "final", "bonus"):
+            value = cleaned.get(field)
+            if value is not None:
+                document[field] = value
 
         letter = _calculate_letter_grade(
-            cleaned.get("midterm"), cleaned.get("final"), cleaned.get("bonus")
+            document.get("midterm"), document.get("final"), document.get("bonus")
         )
-        if letter:
-            cleaned["letter"] = letter
+        if letter is not None:
+            document["letter"] = letter
 
         collection = get_enrollments_collection()
-        collection.insert_one(cleaned)
-        created = collection.find_one({"_id": cleaned["_id"]})
-        serialized = serialize_enrollment(created or cleaned)
-        section = get_sections_collection().find_one(
-            {"_id": serialized["section_id"]},
-            projection={"course_id": 1, "section_no": 1, "instructor_id": 1, "semester": 1},
-        )
-        student = get_students_collection().find_one(
-            {"_id": serialized["student_id"]}, projection={"full_name": 1}
-        )
-        course_doc = None
-        if section and section.get("course_id"):
-            course_doc = get_courses_collection().find_one(
-                {"_id": section["course_id"]}, projection={"title": 1, "dept_id": 1}
-            )
+        result = collection.insert_one(document)
 
-        serialized["student_name"] = student.get("full_name") if student else None
-        if section:
-            serialized["course_id"] = section.get("course_id")
-            serialized["section_no"] = section.get("section_no")
-            serialized["instructor_id"] = section.get("instructor_id")
-            serialized.setdefault("semester", section.get("semester"))
-        if course_doc:
-            serialized["course_title"] = course_doc.get("title")
-            serialized["course_dept_id"] = course_doc.get("dept_id")
-
-        return jsonify(serialized), 201
+        return jsonify({"ok": True, "id": str(result.inserted_id)}), 201
     except ConfigError as exc:
         return _handle_config_error(exc)
     except DuplicateKeyError:
@@ -930,8 +871,9 @@ def update_enrollment(enrollment_id: str):
     data = request.get_json(silent=True)
     cleaned, errors = _validate_enrollment_payload(data, require_all=False)
 
-    if "_id" in cleaned and cleaned["_id"] != enrollment_id:
-        errors["_id"] = "Enrollment ID cannot be changed."
+    if "student_id" in cleaned:
+        errors["student_id"] = "Student cannot be changed."
+        cleaned.pop("student_id", None)
 
     if errors:
         return _json_error("Validation failed.", 400, errors)
@@ -941,27 +883,59 @@ def update_enrollment(enrollment_id: str):
 
     try:
         collection = get_enrollments_collection()
-        existing = collection.find_one({"_id": enrollment_id})
-        if not existing:
+        existing: Dict[str, Any] | None = None
+        match_filter: Dict[str, Any] | None = None
+        for candidate in _candidate_enrollment_filters(enrollment_id):
+            doc = collection.find_one(candidate)
+            if doc:
+                existing = doc
+                match_filter = candidate
+                break
+
+        if not existing or match_filter is None:
             return _json_error("Enrollment not found.", 404)
 
-        if "student_id" in cleaned and not _ensure_student_exists(cleaned["student_id"]):
-            return _json_error("Student not found for enrollment.", 400, {"student_id": "Select an existing student."})
-        if "section_id" in cleaned and not _ensure_section_exists(cleaned["section_id"]):
-            return _json_error("Section not found for enrollment.", 400, {"section_id": "Select an existing section."})
+        grade_fields = ("midterm", "final", "bonus")
 
-        combined = existing.copy()
-        combined.update(cleaned)
-        letter = _calculate_letter_grade(
-            combined.get("midterm"), combined.get("final"), combined.get("bonus")
-        )
+        if "section_id" in cleaned or "semester" in cleaned:
+            next_section_id = cleaned.get("section_id", existing.get("section_id"))
+            next_semester = cleaned.get("semester", existing.get("semester"))
+            if not _ensure_section_exists(next_section_id, next_semester):
+                return _json_error("Class section not found for the specified semester.", 404)
 
-        update_fields = cleaned.copy()
+        update_fields: Dict[str, Any] = {}
         unset_fields: Dict[str, str] = {}
-        if letter:
-            update_fields["letter"] = letter
-        elif "letter" in combined or "letter" in existing:
-            unset_fields["letter"] = ""
+        combined = existing.copy()
+
+        for field in ("semester", "section_id"):
+            if field in cleaned:
+                combined[field] = cleaned[field]
+                update_fields[field] = cleaned[field]
+
+        for field in grade_fields:
+            if field in cleaned:
+                value = cleaned[field]
+                combined[field] = value
+                if value is None:
+                    unset_fields[field] = ""
+                    update_fields.pop(field, None)
+                else:
+                    update_fields[field] = value
+                    unset_fields.pop(field, None)
+
+        if any(field in cleaned for field in grade_fields):
+            letter = _calculate_letter_grade(
+                combined.get("midterm"), combined.get("final"), combined.get("bonus")
+            )
+            if letter is not None:
+                update_fields["letter"] = letter
+                unset_fields.pop("letter", None)
+            else:
+                unset_fields["letter"] = ""
+                update_fields.pop("letter", None)
+
+        if not update_fields and not unset_fields:
+            return _json_error("No changes supplied.", 400)
 
         update_doc: Dict[str, Any] = {}
         if update_fields:
@@ -969,40 +943,11 @@ def update_enrollment(enrollment_id: str):
         if unset_fields:
             update_doc["$unset"] = unset_fields
 
-        if not update_doc:
-            return _json_error("No changes supplied.", 400)
-
-        result = collection.update_one({"_id": enrollment_id}, update_doc)
+        result = collection.update_one(match_filter, update_doc)
         if result.matched_count == 0:
             return _json_error("Enrollment not found.", 404)
 
-        updated = collection.find_one({"_id": enrollment_id})
-        serialized = serialize_enrollment(updated or combined)
-
-        student = get_students_collection().find_one(
-            {"_id": serialized["student_id"]}, projection={"full_name": 1}
-        )
-        section = get_sections_collection().find_one(
-            {"_id": serialized["section_id"]},
-            projection={"course_id": 1, "section_no": 1, "instructor_id": 1, "semester": 1},
-        )
-        course_doc = None
-        if section and section.get("course_id"):
-            course_doc = get_courses_collection().find_one(
-                {"_id": section["course_id"]}, projection={"title": 1, "dept_id": 1}
-            )
-
-        serialized["student_name"] = student.get("full_name") if student else None
-        if section:
-            serialized["course_id"] = section.get("course_id")
-            serialized["section_no"] = section.get("section_no")
-            serialized["instructor_id"] = section.get("instructor_id")
-            serialized.setdefault("semester", section.get("semester"))
-        if course_doc:
-            serialized["course_title"] = course_doc.get("title")
-            serialized["course_dept_id"] = course_doc.get("dept_id")
-
-        return jsonify(serialized)
+        return jsonify({"ok": True})
     except ConfigError as exc:
         return _handle_config_error(exc)
     except DuplicateKeyError:
@@ -1015,10 +960,16 @@ def update_enrollment(enrollment_id: str):
 def delete_enrollment(enrollment_id: str):
     try:
         collection = get_enrollments_collection()
-        result = collection.delete_one({"_id": enrollment_id})
-        if result.deleted_count == 0:
+        deleted = 0
+        for candidate in _candidate_enrollment_filters(enrollment_id):
+            result = collection.delete_one(candidate)
+            if result.deleted_count:
+                deleted = result.deleted_count
+                break
+
+        if deleted == 0:
             return _json_error("Enrollment not found.", 404)
-        return jsonify({"deleted": True})
+        return jsonify({"ok": True})
     except ConfigError as exc:
         return _handle_config_error(exc)
     except PyMongoError as exc:
