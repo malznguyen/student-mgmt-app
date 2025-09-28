@@ -217,5 +217,97 @@
         { "dow": "Wed", "start": "18:00", "end": "20:30" }
       ]
     }
+  ],
+  "enrollments": [
+    {
+      "student_id": "S-2001",
+      "section_id": "CS101_2025A_01",
+      "semester": "2025A",
+      "midterm": 8.8,
+      "final": 9.2,
+      "bonus": 0.5,
+      "letter": "A"
+    },
+    {
+      "student_id": "S-2002",
+      "section_id": "BIO150_2025B_01",
+      "semester": "2025B",
+      "midterm": 7.1,
+      "final": 7.8,
+      "bonus": 0.2,
+      "letter": "B+"
+    },
+    {
+      "student_id": "S-2003",
+      "section_id": "MATH221_2025A_01",
+      "semester": "2025A",
+      "midterm": 6.2,
+      "final": 6.8,
+      "bonus": 0.0,
+      "letter": "B-"
+    },
+    {
+      "student_id": "S-2004",
+      "section_id": "CS101_2025B_02",
+      "semester": "2025B",
+      "midterm": 5.4,
+      "final": 5.8,
+      "bonus": 0.0,
+      "letter": "C"
+    },
+    {
+      "student_id": "S-2005",
+      "section_id": "BUS230_2025B_01",
+      "semester": "2025B",
+      "midterm": 8.1,
+      "final": 8.4,
+      "bonus": 0.3,
+      "letter": "A"
+    },
+    {
+      "student_id": "S-2006",
+      "section_id": "ECON110_2025A_02",
+      "semester": "2025A",
+      "midterm": 4.8,
+      "final": 5.2,
+      "bonus": 0.0,
+      "letter": "D"
+    },
+    {
+      "student_id": "S-2007",
+      "section_id": "PHYS140_2025B_01",
+      "semester": "2025B",
+      "midterm": 7.9,
+      "final": 8.3,
+      "bonus": 0.5,
+      "letter": "A"
+    },
+    {
+      "student_id": "S-2008",
+      "section_id": "CS210_2025A_01",
+      "semester": "2025A",
+      "midterm": 6.8,
+      "final": 7.2,
+      "bonus": 0.1,
+      "letter": "B"
+    },
+    {
+      "student_id": "S-2002",
+      "section_id": "CS101_2025A_01",
+      "semester": "2025A",
+      "midterm": 8.0,
+      "final": 7.5,
+      "bonus": 0.0,
+      "letter": "B+"
+    },
+    {
+      "student_id": "S-2005",
+      "section_id": "MATH221_2025A_01",
+      "semester": "2025A",
+      "midterm": 5.9,
+      "final": 6.1,
+      "bonus": 0.2,
+      "letter": "C+"
+    }
   ]
 }
