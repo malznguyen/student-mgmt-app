@@ -1,28 +1,32 @@
 """Database connection utilities."""
 
-from __future__ import annotations
-
-from functools import lru_cache
-from typing import Any, Dict, List
-
 from pymongo import ASCENDING, DESCENDING, IndexModel, MongoClient
 from pymongo.collection import Collection
 
 from .config import get_db_name, get_mongo_uri
 
+_MONGO_CLIENT = None
+_MONGO_DB = None
 
-@lru_cache(maxsize=1)
-def _get_client() -> MongoClient:
+
+def _get_client():
     """Create (or reuse) a MongoDB client using the configured URI."""
 
-    return MongoClient(get_mongo_uri(), serverSelectionTimeoutMS=5000)
+    global _MONGO_CLIENT
+
+    if _MONGO_CLIENT is None:
+        _MONGO_CLIENT = MongoClient(get_mongo_uri(), serverSelectionTimeoutMS=5000)
+    return _MONGO_CLIENT
 
 
-@lru_cache(maxsize=1)
 def get_db():
     """Return the application's MongoDB database instance."""
 
-    return _get_client()[get_db_name()]
+    global _MONGO_DB
+
+    if _MONGO_DB is None:
+        _MONGO_DB = _get_client()[get_db_name()]
+    return _MONGO_DB
 
 
 _students_indexes_created = False
@@ -53,12 +57,12 @@ def get_students_collection() -> Collection:
     return collection
 
 
-def serialize_student(document: Dict[str, Any]) -> Dict[str, Any]:
+def serialize_student(document):
     """Convert a MongoDB student document into a JSON-serialisable dict."""
 
     year = document.get("year")
     if isinstance(year, str) and year.isdigit():
-        year_value: int | None = int(year)
+        year_value = int(year)
     elif isinstance(year, (int, float)):
         year_value = int(year)
     else:
@@ -101,7 +105,7 @@ def get_courses_collection() -> Collection:
     return collection
 
 
-def serialize_course(document: Dict[str, Any]) -> Dict[str, Any]:
+def serialize_course(document):
     """Serialize a raw Mongo course document to JSON-friendly dict."""
 
     credits = document.get("credits")
@@ -129,7 +133,7 @@ def _ensure_sections_indexes(collection: Collection) -> None:
     if _sections_indexes_created:
         return
 
-    indexes: List[IndexModel] = [
+    indexes = [
         IndexModel(
             [("course_id", ASCENDING), ("semester", ASCENDING)],
             name="course_semester",
@@ -153,7 +157,7 @@ def get_sections_collection() -> Collection:
     return collection
 
 
-def serialize_section(document: Dict[str, Any]) -> Dict[str, Any]:
+def serialize_section(document):
     """Serialize a class section document into JSON serialisable dict."""
 
     schedule = document.get("schedule", [])
@@ -177,7 +181,7 @@ def _ensure_enrollments_indexes(collection: Collection) -> None:
     if _enrollments_indexes_created:
         return
 
-    indexes: List[IndexModel] = [
+    indexes = [
         IndexModel(
             [("section_id", ASCENDING)],
             name="section_id_idx",
@@ -217,10 +221,10 @@ def get_enrollments_collection() -> Collection:
     return collection
 
 
-def serialize_enrollment(document: Dict[str, Any]) -> Dict[str, Any]:
+def serialize_enrollment(document):
     """Serialize an enrollment document for JSON responses."""
 
-    def _score(value: Any) -> float | None:
+    def _score(value):
         if value is None:
             return None
         try:
