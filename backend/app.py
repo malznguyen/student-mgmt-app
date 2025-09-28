@@ -370,7 +370,6 @@ def list_students():
                 "email": 1,
                 "major_dept_id": 1,
                 "year": 1,
-                "pronouns": 1,
                 "phone": 1,
             },
             "sort": [("full_name", 1)],
@@ -390,8 +389,9 @@ def list_students():
         return jsonify(students)
     except ConfigError as exc:
         return _handle_config_error(exc)
-    except PyMongoError as exc:
-        return _handle_db_error("Failed to list students", exc)
+    except PyMongoError:
+        logger.exception("Failed to list students due to MongoDB error")
+        return jsonify({"error": "unavailable"}), 503
 
 
 @app.post("/api/students")
