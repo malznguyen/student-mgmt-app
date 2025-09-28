@@ -113,5 +113,109 @@
       "credits": 3,
       "prereq_ids": []
     }
+  ],
+  "class_sections": [
+    {
+      "_id": "CS101_2025A_01",
+      "course_id": "CS101",
+      "semester": "2025A",
+      "section_no": "01",
+      "instructor_id": "I-2301",
+      "capacity": 40,
+      "room": "ENG-201",
+      "schedule": [
+        { "dow": "Mon", "start": "09:00", "end": "10:15" },
+        { "dow": "Wed", "start": "09:00", "end": "10:15" }
+      ]
+    },
+    {
+      "_id": "CS101_2025B_02",
+      "course_id": "CS101",
+      "semester": "2025B",
+      "section_no": "02",
+      "instructor_id": "I-2304",
+      "capacity": 38,
+      "room": "ENG-118",
+      "schedule": [
+        { "dow": "Tue", "start": "13:00", "end": "14:15" },
+        { "dow": "Thu", "start": "13:00", "end": "14:15" }
+      ]
+    },
+    {
+      "_id": "CS210_2025A_01",
+      "course_id": "CS210",
+      "semester": "2025A",
+      "section_no": "01",
+      "instructor_id": "I-2402",
+      "capacity": 32,
+      "room": "TECH-210",
+      "schedule": [
+        { "dow": "Mon", "start": "11:00", "end": "12:15" },
+        { "dow": "Wed", "start": "11:00", "end": "12:15" }
+      ]
+    },
+    {
+      "_id": "MATH221_2025A_01",
+      "course_id": "MATH221",
+      "semester": "2025A",
+      "section_no": "01",
+      "instructor_id": "I-3105",
+      "capacity": 45,
+      "room": "SCI-104",
+      "schedule": [
+        { "dow": "Tue", "start": "08:30", "end": "09:45" },
+        { "dow": "Thu", "start": "08:30", "end": "09:45" }
+      ]
+    },
+    {
+      "_id": "BIO150_2025B_01",
+      "course_id": "BIO150",
+      "semester": "2025B",
+      "section_no": "01",
+      "instructor_id": "I-2850",
+      "capacity": 28,
+      "room": "LAB-202",
+      "schedule": [
+        { "dow": "Mon", "start": "14:00", "end": "16:45" }
+      ]
+    },
+    {
+      "_id": "PHYS140_2025B_01",
+      "course_id": "PHYS140",
+      "semester": "2025B",
+      "section_no": "01",
+      "instructor_id": "I-3307",
+      "capacity": 36,
+      "room": "SCI-220",
+      "schedule": [
+        { "dow": "Tue", "start": "10:00", "end": "11:15" },
+        { "dow": "Thu", "start": "10:00", "end": "11:15" }
+      ]
+    },
+    {
+      "_id": "ECON110_2025A_02",
+      "course_id": "ECON110",
+      "semester": "2025A",
+      "section_no": "02",
+      "instructor_id": "I-3501",
+      "capacity": 50,
+      "room": "BUS-105",
+      "schedule": [
+        { "dow": "Mon", "start": "15:30", "end": "16:45" },
+        { "dow": "Wed", "start": "15:30", "end": "16:45" }
+      ]
+    },
+    {
+      "_id": "BUS230_2025B_01",
+      "course_id": "BUS230",
+      "semester": "2025B",
+      "section_no": "01",
+      "instructor_id": "I-3655",
+      "capacity": 24,
+      "room": "BUS-214",
+      "schedule": [
+        { "dow": "Wed", "start": "18:00", "end": "20:30" }
+      ]
+    }
   ]
 }

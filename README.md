@@ -102,8 +102,53 @@ curl -X PUT http://localhost:5000/api/courses/CS350 \
 curl -X DELETE http://localhost:5000/api/courses/CS350
 ```
 
+## Sections API
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET    | `/api/sections` | List class sections. Supports `course_id`, `semester`, `instructor_id`, `q` (matches section/course IDs), and `limit` (defaults to 200). |
+| POST   | `/api/sections` | Create a section. Requires `_id`, `course_id`, `semester`, and `section_no`; optional `instructor_id`, `capacity`, `room`, and `schedule`. Validates that `course_id` exists. |
+| PUT    | `/api/sections/<id>` | Update any section fields (cannot change `_id`). Validates referenced course when `course_id` is supplied. |
+| DELETE | `/api/sections/<id>` | Delete a section. Returns number of affected enrollments for awareness. |
+
+Validation failures respond with HTTP 400 and `details` describing the offending fields. Unknown courses respond with HTTP 404, and creating a duplicate `_id` returns HTTP 409.
+
+### Sample cURL
+
+```bash
+# Create a new section
+curl -X POST http://localhost:5000/api/sections \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "_id": "CS210_2025B_01",
+    "course_id": "CS210",
+    "semester": "2025B",
+    "section_no": "01",
+    "instructor_id": "I-2403",
+    "capacity": 28,
+    "room": "TECH-214",
+    "schedule": [
+      { "dow": "Tue", "start": "09:30", "end": "10:45" },
+      { "dow": "Thu", "start": "09:30", "end": "10:45" }
+    ]
+  }'
+
+# Update the meeting pattern for an existing section
+curl -X PUT http://localhost:5000/api/sections/CS210_2025B_01 \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "schedule": [
+      { "dow": "Mon", "start": "08:30", "end": "09:45" },
+      { "dow": "Wed", "start": "08:30", "end": "09:45" }
+    ]
+  }'
+
+# Delete a section
+curl -X DELETE http://localhost:5000/api/sections/CS210_2025B_01
+```
+
 ## Seeding
 
-`python scripts/seed.py` clears the configured collections and loads `scripts/seed.json`, which now contains sample students **and** a curated set of seven catalog courses. Run it any time you want to reset the roster and catalog data.
+`python scripts/seed.py` clears the configured collections and loads `scripts/seed.json`, which now contains sample students, seven catalog courses, **and** eight ready-to-use class sections. Run it any time you want to reset the roster, catalog, and schedule data.
 
 > **Reminder:** keep `backend/.env` out of source control.

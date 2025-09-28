@@ -172,6 +172,19 @@ def serialize_section(document):
     if not isinstance(schedule, list):
         schedule = []
 
+    normalized_schedule = []
+    for entry in schedule:
+        if isinstance(entry, dict):
+            dow = str(entry.get("dow", "")).strip()
+            start = str(entry.get("start", "")).strip()
+            end = str(entry.get("end", "")).strip()
+            if dow or start or end:
+                normalized_schedule.append({"dow": dow, "start": start, "end": end})
+        elif isinstance(entry, str):
+            text = entry.strip()
+            if text:
+                normalized_schedule.append({"dow": text, "start": "", "end": ""})
+
     return {
         "_id": str(document.get("_id", "")),
         "course_id": document.get("course_id"),
@@ -180,7 +193,7 @@ def serialize_section(document):
         "instructor_id": document.get("instructor_id"),
         "capacity": document.get("capacity"),
         "room": document.get("room"),
-        "schedule": schedule,
+        "schedule": normalized_schedule,
     }
 
 

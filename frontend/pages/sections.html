@@ -109,14 +109,14 @@
           <section class="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div class="grid gap-4 md:grid-cols-3">
               <div class="md:col-span-2">
-                <label for="section-course-filter" class="text-sm font-medium text-slate-700">Course</label>
+                <label for="section-search-filter" class="text-sm font-medium text-slate-700">Search</label>
                 <div class="mt-1 relative">
                   <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="6" /><path d="m17 17 3.5 3.5" stroke-linecap="round" /></svg>
                   </span>
-                  <input id="section-course-filter" type="search" x-model="courseFilter" placeholder="Search by course title or ID" class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
+                  <input id="section-search-filter" type="search" x-model="searchTerm" placeholder="Search by section or course ID" class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
                 </div>
-                <p class="mt-2 text-xs text-slate-500">Filter sections by matching course title or catalog ID.</p>
+                <p class="mt-2 text-xs text-slate-500">Filter sections by matching the section identifier or related course code.</p>
               </div>
               <div>
                 <label for="semester-filter" class="text-sm font-medium text-slate-700">Semester</label>
@@ -211,7 +211,13 @@
                             </td>
                             <td class="px-4 py-3 text-sm text-slate-700">
                               <div x-text="section.room || '—'"></div>
-                              <p class="text-xs text-slate-500" x-show="section.schedule && section.schedule.length" x-text="section.schedule.join(', ')"></p>
+                              <template x-if="section.schedule && section.schedule.length">
+                                <ul class="mt-1 space-y-0.5 text-xs text-slate-500">
+                                  <template x-for="(meeting, idx) in section.schedule" :key="`${section._id}-schedule-${idx}`">
+                                    <li x-text="formatMeeting(meeting)"></li>
+                                  </template>
+                                </ul>
+                              </template>
                             </td>
                             <td class="px-4 py-3 text-right">
                               <div class="inline-flex items-center gap-2">
@@ -314,7 +320,8 @@
           </div>
           <div>
             <label for="section-capacity" class="text-sm font-medium text-slate-700">Capacity</label>
-            <input id="section-capacity" type="number" min="0" step="1" x-model.number="form.capacity" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.capacity ? 'border-rose-300' : 'border-slate-200'" placeholder="30" required />
+            <input id="section-capacity" type="number" min="0" step="1" x-model="form.capacity" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.capacity ? 'border-rose-300' : 'border-slate-200'" placeholder="30" />
+            <p class="mt-1 text-xs text-slate-500">Leave blank if the seat count has not been assigned.</p>
             <p x-show="errors.capacity" x-text="errors.capacity" class="mt-1 text-xs font-medium text-rose-600"></p>
           </div>
         </div>
@@ -322,20 +329,60 @@
         <div class="grid gap-5 sm:grid-cols-2">
           <div>
             <label for="section-instructor" class="text-sm font-medium text-slate-700">Instructor ID</label>
-            <input id="section-instructor" type="text" x-model="form.instructor_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.instructor_id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. I-1001" required />
+            <input id="section-instructor" type="text" x-model="form.instructor_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.instructor_id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. I-1001" />
             <p x-show="errors.instructor_id" x-text="errors.instructor_id" class="mt-1 text-xs font-medium text-rose-600"></p>
           </div>
           <div>
             <label for="section-room" class="text-sm font-medium text-slate-700">Room</label>
-            <input id="section-room" type="text" x-model="form.room" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.room ? 'border-rose-300' : 'border-slate-200'" placeholder="ENG-201" required />
+            <input id="section-room" type="text" x-model="form.room" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.room ? 'border-rose-300' : 'border-slate-200'" placeholder="ENG-201" />
             <p x-show="errors.room" x-text="errors.room" class="mt-1 text-xs font-medium text-rose-600"></p>
           </div>
         </div>
 
         <div>
-          <label for="section-schedule" class="text-sm font-medium text-slate-700">Meeting pattern</label>
-          <textarea id="section-schedule" rows="3" x-model="form.schedule_text" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" placeholder="Mon 09:00-10:15&#10;Wed 09:00-10:15"></textarea>
-          <p class="mt-1 text-xs text-slate-500">Enter one meeting per line. Leave blank if the schedule is not finalized.</p>
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-slate-700">Meeting pattern</label>
+            <button type="button" class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300" @click="addScheduleRow()">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
+              Add meeting
+            </button>
+          </div>
+          <p class="mt-1 text-xs text-slate-500">Specify recurring meetings. Leave empty if the schedule is still being coordinated.</p>
+          <template x-if="errors.schedule">
+            <p class="mt-2 text-xs font-medium text-rose-600" x-text="errors.schedule"></p>
+          </template>
+          <div class="mt-4 space-y-3" x-ref="scheduleList">
+            <template x-if="!form.schedule.length">
+              <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">No meetings added yet.</p>
+            </template>
+            <template x-for="(meeting, index) in form.schedule" :key="meeting.key">
+              <div class="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 sm:grid-cols-7 sm:items-end">
+                <div class="sm:col-span-2">
+                  <label :for="`meeting-dow-${meeting.key}`" class="text-xs font-medium text-slate-600">Day of week</label>
+                  <select :id="`meeting-dow-${meeting.key}`" x-model="meeting.dow" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                    <option value="">Select</option>
+                    <template x-for="day in meetingDays" :key="day">
+                      <option :value="day" x-text="day"></option>
+                    </template>
+                  </select>
+                </div>
+                <div class="sm:col-span-2">
+                  <label :for="`meeting-start-${meeting.key}`" class="text-xs font-medium text-slate-600">Start time</label>
+                  <input :id="`meeting-start-${meeting.key}`" type="time" x-model="meeting.start" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
+                </div>
+                <div class="sm:col-span-2">
+                  <label :for="`meeting-end-${meeting.key}`" class="text-xs font-medium text-slate-600">End time</label>
+                  <input :id="`meeting-end-${meeting.key}`" type="time" x-model="meeting.end" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
+                </div>
+                <div class="sm:col-span-1 flex items-end">
+                  <button type="button" class="inline-flex items-center gap-1 rounded-full border border-transparent bg-white px-3 py-1.5 text-xs font-medium text-rose-600 hover:border-rose-200 hover:bg-rose-50" @click="removeScheduleRow(meeting.key)">
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 9 9 15m0-6 6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </template>
+          </div>
         </div>
 
         <div class="flex items-center justify-end gap-3 pt-2">
@@ -356,7 +403,7 @@
         courses: [],
         loading: true,
         loadError: '',
-        courseFilter: '',
+        searchTerm: '',
         selectedSemester: '',
         modalOpen: false,
         isEditing: false,
@@ -364,6 +411,7 @@
         deletingId: '',
         toastTimeout: null,
         toast: { visible: false, message: '', detail: '', variant: 'success' },
+        meetingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
         form: {
           _id: '',
           course_id: '',
@@ -372,7 +420,7 @@
           instructor_id: '',
           capacity: '',
           room: '',
-          schedule_text: ''
+          schedule: []
         },
         errors: {},
         get courseOptions() {
@@ -388,15 +436,27 @@
           return [...new Set(this.sections.map((section) => section.semester).filter(Boolean))].sort();
         },
         get filteredSections() {
-          const term = this.courseFilter.trim().toLowerCase();
+          const term = this.searchTerm.trim().toLowerCase();
           return this.sections.filter((section) => {
             const matchesSemester = this.selectedSemester ? section.semester === this.selectedSemester : true;
-            const matchesCourse = term
-              ? [section.course_title, section.course_id]
-                  .some((value) => String(value || '').toLowerCase().includes(term))
+            const matchesQuery = term
+              ? [section._id, section.course_id].some((value) => String(value || '').toLowerCase().includes(term))
               : true;
-            return matchesSemester && matchesCourse;
+            return matchesSemester && matchesQuery;
           });
+        },
+        formatMeeting(meeting) {
+          if (!meeting || typeof meeting !== 'object') return '';
+          const dow = String(meeting.dow || '').trim();
+          const start = String(meeting.start || '').trim();
+          const end = String(meeting.end || '').trim();
+          if (dow && start && end) {
+            return `${dow} ${start}–${end}`;
+          }
+          if (dow && (start || end)) {
+            return `${dow} ${[start, end].filter(Boolean).join('–')}`;
+          }
+          return dow || [start, end].filter(Boolean).join('–');
         },
         init() {
           this.loadData();
@@ -432,17 +492,31 @@
             const message = (payload && payload.error) || `Request failed with status ${response.status}`;
             throw new Error(message);
           }
-          return payload.map((section) => ({
-            _id: section._id ?? '',
-            course_id: section.course_id ?? '',
-            course_title: section.course_title ?? '',
-            semester: section.semester ?? '',
-            section_no: section.section_no ?? '',
-            instructor_id: section.instructor_id ?? '',
-            capacity: section.capacity != null ? Number(section.capacity) : null,
-            room: section.room ?? '',
-            schedule: Array.isArray(section.schedule) ? section.schedule : []
-          }));
+          return payload.map((section) => {
+            const meetings = Array.isArray(section.schedule)
+              ? section.schedule
+                  .map((entry) => ({
+                    dow: String(entry?.dow ?? '').trim(),
+                    start: String(entry?.start ?? '').trim(),
+                    end: String(entry?.end ?? '').trim()
+                  }))
+                  .filter((entry) => entry.dow || entry.start || entry.end)
+              : [];
+            return {
+              _id: section._id ?? '',
+              course_id: section.course_id ?? '',
+              course_title: section.course_title ?? '',
+              semester: section.semester ?? '',
+              section_no: section.section_no ?? '',
+              instructor_id: section.instructor_id ?? '',
+              capacity:
+                section.capacity !== undefined && section.capacity !== null && section.capacity !== ''
+                  ? Number(section.capacity)
+                  : null,
+              room: section.room ?? '',
+              schedule: meetings
+            };
+          });
         },
         async requestCourses() {
           const response = await fetch('/api/courses?limit=500');
@@ -470,8 +544,28 @@
             }
           }
         },
-        openCreate() {
-          this.isEditing = false;
+        generateKey() {
+          return `m-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+        },
+        newScheduleRow() {
+          return { key: this.generateKey(), dow: '', start: '', end: '' };
+        },
+        addScheduleRow() {
+          this.form.schedule.push(this.newScheduleRow());
+        },
+        removeScheduleRow(key) {
+          this.form.schedule = this.form.schedule.filter((meeting) => meeting.key !== key);
+        },
+        toScheduleRows(entries) {
+          if (!Array.isArray(entries)) return [];
+          return entries.map((entry) => ({
+            key: this.generateKey(),
+            dow: String(entry?.dow || '').trim(),
+            start: String(entry?.start || '').trim(),
+            end: String(entry?.end || '').trim()
+          }));
+        },
+        resetForm() {
           this.form = {
             _id: '',
             course_id: '',
@@ -480,24 +574,27 @@
             instructor_id: '',
             capacity: '',
             room: '',
-            schedule_text: ''
+            schedule: []
           };
+        },
+        openCreate() {
+          this.isEditing = false;
+          this.resetForm();
           this.errors = {};
           this.saving = false;
           this.modalOpen = true;
         },
         openEdit(section) {
           this.isEditing = true;
-          this.form = {
-            _id: section._id,
-            course_id: section.course_id,
-            semester: section.semester,
-            section_no: section.section_no,
-            instructor_id: section.instructor_id,
-            capacity: section.capacity != null ? Number(section.capacity) : '',
-            room: section.room || '',
-            schedule_text: Array.isArray(section.schedule) ? section.schedule.join('\n') : ''
-          };
+          this.resetForm();
+          this.form._id = section._id;
+          this.form.course_id = section.course_id;
+          this.form.semester = section.semester;
+          this.form.section_no = section.section_no;
+          this.form.instructor_id = section.instructor_id || '';
+          this.form.capacity = section.capacity != null ? String(section.capacity) : '';
+          this.form.room = section.room || '';
+          this.form.schedule = this.toScheduleRows(section.schedule);
           this.errors = {};
           this.saving = false;
           this.modalOpen = true;
@@ -505,17 +602,9 @@
         closeModal() {
           if (this.saving) return;
           this.modalOpen = false;
-          this.form = {
-            _id: '',
-            course_id: '',
-            semester: '',
-            section_no: '',
-            instructor_id: '',
-            capacity: '',
-            room: '',
-            schedule_text: ''
-          };
+          this.resetForm();
           this.errors = {};
+          this.isEditing = false;
         },
         validate() {
           const nextErrors = {};
@@ -523,29 +612,56 @@
           if (!this.form.course_id) nextErrors.course_id = 'Select a course.';
           if (!this.form.semester.trim()) nextErrors.semester = 'Semester is required.';
           if (!this.form.section_no.trim()) nextErrors.section_no = 'Section number is required.';
-          if (!this.form.instructor_id.trim()) nextErrors.instructor_id = 'Instructor ID is required.';
-          if (this.form.capacity === '' || Number.isNaN(Number(this.form.capacity)) || Number(this.form.capacity) < 0) {
-            nextErrors.capacity = 'Capacity must be zero or greater.';
+          if (this.form.capacity !== '') {
+            const capacityNumber = Number(this.form.capacity);
+            if (Number.isNaN(capacityNumber) || capacityNumber < 0) {
+              nextErrors.capacity = 'Capacity must be zero or greater.';
+            }
           }
-          if (!this.form.room.trim()) nextErrors.room = 'Room is required.';
+          const hasPartialMeeting = this.form.schedule.some((meeting) => {
+            const parts = [meeting.dow, meeting.start, meeting.end].map((value) => String(value || '').trim());
+            const hasAny = parts.some((value) => value.length);
+            const hasAll = parts.every((value) => value.length);
+            return hasAny && !hasAll;
+          });
+          if (hasPartialMeeting) {
+            nextErrors.schedule = 'Complete each meeting row or remove it.';
+          }
           this.errors = nextErrors;
           return Object.keys(nextErrors).length === 0;
         },
         buildPayload() {
-          const scheduleEntries = this.form.schedule_text
-            .split('\n')
-            .map((line) => line.trim())
-            .filter((line) => line.length);
-          return {
+          const payload = {
             _id: this.form._id.trim(),
             course_id: this.form.course_id,
             semester: this.form.semester.trim().toUpperCase(),
-            section_no: this.form.section_no.trim(),
-            instructor_id: this.form.instructor_id.trim(),
-            capacity: Number(this.form.capacity),
-            room: this.form.room.trim(),
-            schedule: scheduleEntries
+            section_no: this.form.section_no.trim()
           };
+          if (this.form.instructor_id.trim()) {
+            payload.instructor_id = this.form.instructor_id.trim();
+          }
+          if (this.form.capacity !== '') {
+            const capacityNumber = Number(this.form.capacity);
+            if (!Number.isNaN(capacityNumber)) {
+              payload.capacity = capacityNumber;
+            }
+          }
+          if (this.form.room.trim()) {
+            payload.room = this.form.room.trim();
+          }
+          const meetings = this.form.schedule
+            .map((meeting) => ({
+              dow: String(meeting.dow || '').trim(),
+              start: String(meeting.start || '').trim(),
+              end: String(meeting.end || '').trim()
+            }))
+            .filter((meeting) => meeting.dow && meeting.start && meeting.end);
+          if (meetings.length) {
+            payload.schedule = meetings;
+          } else if (this.isEditing) {
+            payload.schedule = [];
+          }
+          return payload;
         },
         async saveSection() {
           if (!this.validate()) {
@@ -564,6 +680,9 @@
             delete payload._id;
           }
 
+          const courseIdForRefresh = this.form.course_id;
+          const editing = this.isEditing;
+
           try {
             const response = await fetch(url, {
               method,
@@ -574,23 +693,24 @@
 
             if (!response.ok || !result) {
               const details = (result && result.details) || {};
-              this.errors = details;
+              this.errors = { ...this.errors, ...details };
               const detailMessage =
                 details.course_id ||
                 details.section_no ||
                 details.semester ||
+                details.schedule ||
                 Object.values(details)[0] || '';
               this.showToast((result && result.error) || 'Unable to save section.', 'error', detailMessage);
               return;
             }
 
             await this.refreshSections();
-            await this.refreshCoursesIfNeeded(this.form.course_id);
+            await this.refreshCoursesIfNeeded(courseIdForRefresh);
             this.closeModal();
             this.showToast(
-              this.isEditing ? 'Section updated successfully.' : 'Section created successfully.',
+              editing ? 'Section updated successfully.' : 'Section created successfully.',
               'success',
-              this.isEditing ? 'Schedule refreshed.' : 'Section is ready for enrollment.'
+              editing ? 'Schedule refreshed.' : 'Section is ready for enrollment.'
             );
           } catch (error) {
             console.error('Failed to save section', error);
