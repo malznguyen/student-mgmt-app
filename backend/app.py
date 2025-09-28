@@ -47,9 +47,15 @@ def _clean_string_or_none(value: Any) -> str | None:
     return cleaned if cleaned else None
 
 
-def _parse_limit_arg(limit_arg: str | None) -> int | None:
+def _parse_limit_arg(
+    limit_arg: str | None, *, default: int | None = None
+) -> int | None:
     if not limit_arg:
-        return None
+        if default is None:
+            return None
+        if default <= 0:
+            raise ValueError("limit must be a positive integer.")
+        return default
     try:
         value = int(limit_arg)
     except (TypeError, ValueError):
@@ -226,58 +232,64 @@ def _validate_section_payload(
     errors: Dict[str, str] = {}
     cleaned: Dict[str, Any] = {}
 
-    def require_field(field: str, message: str) -> bool:
-        if field not in payload or _clean_string(payload.get(field)) == "":
+    def _assign_required(field: str, message: str, transform=None) -> None:
+        should_validate = require_all or field in payload
+        if not should_validate:
+            return
+
+        value = _clean_string(payload.get(field))
+        if value == "":
             errors[field] = message
-            return False
-        return True
+            return
 
-    if require_all or "_id" in payload:
-        if require_field("_id", "Section ID is required."):
-            cleaned["_id"] = _clean_string(payload.get("_id"))
+        cleaned[field] = transform(value) if callable(transform) else value
 
-    if require_all or "course_id" in payload:
-        if require_field("course_id", "Course ID is required."):
-            cleaned["course_id"] = _clean_string(payload.get("course_id"))
+    _assign_required("_id", "Section ID is required.")
+    _assign_required("course_id", "Course ID is required.")
+    _assign_required("semester", "Semester is required.", lambda v: v.upper())
+    _assign_required("section_no", "Section number is required.")
 
-    if require_all or "semester" in payload:
-        if require_field("semester", "Semester is required."):
-            cleaned["semester"] = _clean_string(payload.get("semester")).upper()
+    instructor_val = payload.get("instructor_id") if payload else None
+    if instructor_val not in (None, ""):
+        cleaned["instructor_id"] = _clean_string(instructor_val)
 
-    if require_all or "section_no" in payload:
-        if require_field("section_no", "Section number is required."):
-            cleaned["section_no"] = _clean_string(payload.get("section_no"))
+    if "capacity" in payload and payload.get("capacity") not in (None, ""):
+        try:
+            capacity_value = int(float(payload.get("capacity")))
+            if capacity_value < 0:
+                raise ValueError
+            cleaned["capacity"] = capacity_value
+        except (TypeError, ValueError):
+            errors["capacity"] = "Capacity must be a non-negative number."
 
-    if require_all or "instructor_id" in payload:
-        if require_field("instructor_id", "Instructor ID is required."):
-            cleaned["instructor_id"] = _clean_string(payload.get("instructor_id"))
-
-    if require_all or "capacity" in payload:
-        if payload.get("capacity") in (None, ""):
-            if require_all:
-                errors["capacity"] = "Capacity is required."
-        else:
-            try:
-                capacity_value = int(float(payload.get("capacity")))
-                if capacity_value < 0:
-                    raise ValueError
-                cleaned["capacity"] = capacity_value
-            except (TypeError, ValueError):
-                errors["capacity"] = "Capacity must be a non-negative number."
-
-    if "room" in payload:
-        cleaned["room"] = _clean_string(payload.get("room"))
+    room_val = payload.get("room") if payload else None
+    if room_val not in (None, ""):
+        cleaned["room"] = _clean_string(room_val)
 
     if "schedule" in payload:
         schedule = payload.get("schedule")
         if schedule in (None, ""):
             cleaned["schedule"] = []
         elif isinstance(schedule, list):
-            cleaned["schedule"] = [
-                _clean_string(entry) for entry in schedule if _clean_string(entry)
-            ]
+            normalized_schedule = []
+            for index, entry in enumerate(schedule):
+                if not isinstance(entry, dict):
+                    errors[f"schedule[{index}]"] = "Schedule entries must be objects."
+                    continue
+
+                dow = _clean_string(entry.get("dow"))
+                start = _clean_string(entry.get("start"))
+                end = _clean_string(entry.get("end"))
+
+                if not dow or not start or not end:
+                    errors[f"schedule[{index}]"] = "Dow, start, and end are required."
+                    continue
+
+                normalized_schedule.append({"dow": dow, "start": start, "end": end})
+
+            cleaned["schedule"] = normalized_schedule
         else:
-            errors["schedule"] = "Schedule must be an array of strings."
+            errors["schedule"] = "Schedule must be an array of meeting entries."
 
     cleaned = {k: v for k, v in cleaned.items() if v is not None}
     return cleaned, errors
@@ -583,6 +595,7 @@ def list_sections():
         course_id = _clean_string(request.args.get("course_id"))
         semester = _clean_string(request.args.get("semester"))
         instructor_id = _clean_string(request.args.get("instructor_id"))
+        query = _clean_string(request.args.get("q"))
         limit_arg = request.args.get("limit")
 
         if course_id:
@@ -591,6 +604,11 @@ def list_sections():
             filters["semester"] = semester.upper()
         if instructor_id:
             filters["instructor_id"] = instructor_id
+        if query:
+            filters["$or"] = [
+                {"_id": {"$regex": query, "$options": "i"}},
+                {"course_id": {"$regex": query, "$options": "i"}},
+            ]
 
         projection = {
             "_id": 1,
@@ -603,9 +621,13 @@ def list_sections():
             "schedule": 1,
         }
 
-        cursor = collection.find(filters, projection=projection, sort=[("semester", -1), ("section_no", 1)])
+        cursor = collection.find(
+            filters,
+            projection=projection,
+            sort=[("semester", -1), ("section_no", 1)],
+        )
         try:
-            limit_value = _parse_limit_arg(limit_arg)
+            limit_value = _parse_limit_arg(limit_arg, default=200)
         except ValueError as exc:
             return _json_error(str(exc), 400)
         if limit_value:
@@ -653,7 +675,11 @@ def create_section():
 
     try:
         if not _ensure_course_exists(cleaned["course_id"]):
-            return _json_error("Course not found for section.", 400, {"course_id": "Select an existing course."})
+            return _json_error(
+                "Course not found.",
+                404,
+                {"course_id": "Select an existing course."},
+            )
 
         collection = get_sections_collection()
         collection.insert_one(cleaned)
@@ -680,8 +706,10 @@ def update_section(section_id: str):
     data = request.get_json(silent=True)
     cleaned, errors = _validate_section_payload(data, require_all=False)
 
-    if "_id" in cleaned and cleaned["_id"] != section_id:
-        errors["_id"] = "Section ID cannot be changed."
+    if "_id" in cleaned:
+        if cleaned["_id"] != section_id:
+            errors["_id"] = "Section ID cannot be changed."
+        cleaned.pop("_id", None)
 
     if errors:
         return _json_error("Validation failed.", 400, errors)
@@ -691,7 +719,11 @@ def update_section(section_id: str):
 
     try:
         if "course_id" in cleaned and not _ensure_course_exists(cleaned["course_id"]):
-            return _json_error("Course not found for section.", 400, {"course_id": "Select an existing course."})
+            return _json_error(
+                "Course not found.",
+                404,
+                {"course_id": "Select an existing course."},
+            )
 
         collection = get_sections_collection()
         result = collection.update_one({"_id": section_id}, {"$set": cleaned})
