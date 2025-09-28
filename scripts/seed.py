@@ -1,4 +1,4 @@
-"""Load sample data into the MongoDB database."""
+"""Seed helper that loads sample documents into MongoDB."""
 
 from __future__ import annotations
 
@@ -8,6 +8,9 @@ from typing import Any, Dict, List
 
 from dotenv import load_dotenv
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
+
+from backend.src.config import ConfigError, get_db_name, get_mongo_uri
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 BACKEND_DIR = ROOT_DIR / "backend"
@@ -30,30 +33,40 @@ def read_seed_file() -> Dict[str, List[Dict[str, Any]]]:
 
 def main() -> None:
     load_env()
-    from backend.src.config import get_db_name, get_mongo_uri  # type: ignore
+    try:
+        uri = get_mongo_uri()
+        db_name = get_db_name()
+    except ConfigError as exc:  # pragma: no cover - simple CLI utility
+        print(f"Configuration error: {exc}")
+        raise SystemExit(1)
 
-    uri = get_mongo_uri()
-    client = MongoClient(uri)
-    database = client[get_db_name()]
+    client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+    database = client[db_name]
 
-    seed_data = read_seed_file()
+    try:
+        seed_data = read_seed_file()
 
-    for collection_name, documents in seed_data.items():
-        if not isinstance(documents, list):
-            raise ValueError(
-                f"Seed data for collection '{collection_name}' must be a list"
+        for collection_name, documents in seed_data.items():
+            if not isinstance(documents, list):
+                raise ValueError(
+                    f"Seed data for collection '{collection_name}' must be a list"
+                )
+
+            collection = database[collection_name]
+            collection.delete_many({})
+            if documents:
+                collection.insert_many(documents)
+
+            print(
+                f"Loaded {len(documents)} document(s) into '{collection_name}' collection"
             )
 
-        collection = database[collection_name]
-        collection.delete_many({})
-        if documents:
-            collection.insert_many(documents)
-
-        print(
-            f"Loaded {len(documents)} document(s) into '{collection_name}' collection"
-        )
-
-    print(f"Seeding complete for database '{get_db_name()}'.")
+        print(f"Seeding complete for database '{db_name}'.")
+    except PyMongoError as exc:  # pragma: no cover - requires Mongo connection
+        print(f"MongoDB error: {exc}")
+        raise SystemExit(1)
+    finally:
+        client.close()
 
 
 if __name__ == "__main__":

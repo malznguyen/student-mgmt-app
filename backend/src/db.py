@@ -1,4 +1,4 @@
-"""Database connection utilities."""
+"""MongoDB helpers for the application."""
 
 from pymongo import ASCENDING, DESCENDING, IndexModel, MongoClient
 from pymongo.collection import Collection
