@@ -46,6 +46,11 @@ def _ensure_students_indexes(collection: Collection) -> None:
         name="major_year",
         background=True,
     )
+    collection.create_index(
+        [("full_name", ASCENDING)],
+        name="full_name_asc",
+        background=True,
+    )
     _students_indexes_created = True
 
 

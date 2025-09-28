@@ -109,23 +109,76 @@
           <section class="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" aria-labelledby="student-search">
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div class="flex-1">
-                <label id="student-search" class="sr-only" for="search">Search students</label>
-                <div class="relative">
-                  <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
-                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m17 17 3.5 3.5" stroke-linecap="round" /></svg>
-                  </span>
-                  <input x-model="search" type="search" id="search" placeholder="Search by name, email, or ID" class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
-                </div>
-                <p class="mt-2 text-xs text-slate-500">Type to filter students instantly. Search is case-insensitive.</p>
+                <p class="text-sm font-medium text-slate-700">Server-side filters keep the roster fast.</p>
+                <p class="mt-1 text-xs text-slate-500">Use the toolbar below to search, sort, and narrow the student list.</p>
               </div>
               <div class="grid grid-cols-2 gap-3 text-xs text-slate-500 sm:flex sm:flex-col sm:text-right">
                 <div>
-                  <p class="font-semibold text-slate-900" x-text="hasLoaded ? students.length : '—'"></p>
+                  <p class="font-semibold text-slate-900" x-text="hasLoaded ? formatNumber(total) : '—'"></p>
                   <p>Total students</p>
                 </div>
                 <div>
-                  <p class="font-semibold text-slate-900" x-text="hasLoaded ? classYears : '—'"></p>
-                  <p>Class years tracked</p>
+                  <p class="font-semibold text-slate-900" x-text="hasLoaded ? formatNumber(classYears) : '—'"></p>
+                  <p>Class years on this page</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+                <div class="md:col-span-2 xl:col-span-2">
+                  <label id="student-search" for="student-search-input" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Search roster</label>
+                  <div class="relative mt-1">
+                    <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m17 17 3.5 3.5" stroke-linecap="round" /></svg>
+                    </span>
+                    <input id="student-search-input" type="search" placeholder="Search by name or email" x-model.debounce.400ms="query" @input.debounce.400ms="handleFilterChange(true)" :disabled="loading" class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-100" />
+                  </div>
+                </div>
+                <div>
+                  <label for="filter-major" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Major</label>
+                  <select id="filter-major" x-model="selectedMajor" @change="handleFilterChange(true)" :disabled="loading" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-100">
+                    <template x-for="option in majorFilterOptions" :key="option.value || 'all'">
+                      <option :value="option.value" x-text="option.label"></option>
+                    </template>
+                  </select>
+                </div>
+                <div>
+                  <label for="filter-year" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Class year</label>
+                  <select id="filter-year" x-model="selectedYear" @change="handleFilterChange(true)" :disabled="loading" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-100">
+                    <template x-for="option in yearFilterOptions" :key="option.value || 'all'">
+                      <option :value="option.value" x-text="option.label"></option>
+                    </template>
+                  </select>
+                </div>
+                <div>
+                  <label for="sort-by" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Sort</label>
+                  <select id="sort-by" x-model="sort" @change="handleFilterChange(true)" :disabled="loading" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-100">
+                    <template x-for="option in sortOptions" :key="option.value">
+                      <option :value="option.value" x-text="option.label"></option>
+                    </template>
+                  </select>
+                </div>
+              </div>
+              <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-xs font-medium text-slate-600" aria-live="polite" x-text="hasLoaded ? rangeSummary() : '—'"></p>
+                <div class="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-600">
+                  <label for="page-size" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Page size</label>
+                  <select id="page-size" x-model.number="pageSize" @change="handlePageSizeChange()" :disabled="loading" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-100">
+                    <template x-for="size in pageSizeOptions" :key="`page-size-${size}`">
+                      <option :value="size" x-text="size"></option>
+                    </template>
+                  </select>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60" @click="goToPrev()" :disabled="loading || !hasPrev">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m14.25 6.75-4.5 4.5 4.5 4.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    <span>Prev</span>
+                  </button>
+                  <button type="button" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60" @click="goToNext()" :disabled="loading || !hasNext">
+                    <span>Next</span>
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m9.75 6.75 4.5 4.5-4.5 4.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -152,7 +205,7 @@
                 </div>
               </template>
 
-              <template x-if="!loading && hasLoaded && !loadError && filteredStudents.length === 0">
+              <template x-if="!loading && hasLoaded && !loadError && students.length === 0">
                 <div class="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 py-12 text-center">
                   <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
                     <svg class="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16.5 10.5a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" /><path d="M8.25 15.75a6.75 6.75 0 0 0 7.5 0" stroke-linecap="round" /><path d="M5.25 5.25 3 7.5m18-2.25-2.25 2.25" stroke-linecap="round" /></svg>
@@ -168,7 +221,7 @@
                 </div>
               </template>
 
-              <div x-cloak x-show="!loading && hasLoaded && filteredStudents.length" class="overflow-hidden rounded-2xl border border-slate-200">
+              <div x-cloak x-show="!loading && hasLoaded && students.length" class="overflow-hidden rounded-2xl border border-slate-200">
                 <div class="overflow-x-auto">
                   <table class="min-w-full divide-y divide-slate-200 text-left text-sm table-sticky-header">
                     <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
@@ -183,7 +236,7 @@
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
-                      <template x-for="student in filteredStudents" :key="student._id">
+                      <template x-for="student in students" :key="student._id">
                         <tr class="hover:bg-slate-50">
                           <td class="px-4 py-3 font-mono text-xs text-slate-500" x-text="student._id"></td>
                           <td class="px-4 py-3">
@@ -200,7 +253,7 @@
                               <span x-text="departmentMap[student.major_dept_id] || student.major_dept_id"></span>
                             </span>
                           </td>
-                          <td class="px-4 py-3 text-sm text-slate-700" x-text="student.year"></td>
+                          <td class="px-4 py-3 text-sm text-slate-700" x-text="student.year ?? '—'"></td>
                           <td class="px-4 py-3 text-right">
                             <div class="inline-flex items-center gap-2">
                               <button type="button" @click="openEdit(student)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900">
@@ -327,10 +380,19 @@
     ];
 
     const years = ['2024', '2025', '2026', '2027', '2028', '2029'];
+    const numberFormatter = new Intl.NumberFormat();
 
     document.addEventListener('alpine:init', () => {
       Alpine.data('studentsPage', () => ({
-        search: '',
+        query: '',
+        selectedMajor: '',
+        selectedYear: '',
+        sort: 'full_name',
+        page: 1,
+        pageSize: 10,
+        total: 0,
+        hasNext: false,
+        hasPrev: false,
         loading: true,
         loadError: '',
         students: [],
@@ -345,55 +407,198 @@
         toast: { visible: false, message: '', detail: '', variant: 'success' },
         departments: departmentOptions,
         yearOptions: years,
+        pageSizeOptions: [10, 25, 50],
+        sortOptions: [
+          { value: 'full_name', label: 'Name A → Z' },
+          { value: '-full_name', label: 'Name Z → A' },
+          { value: 'year', label: 'Grad year ↑' },
+          { value: '-year', label: 'Grad year ↓' }
+        ],
+        majorFilterOptions: [{ value: '', label: 'All majors' }],
+        yearFilterOptions: [{ value: '', label: 'All years' }],
         get departmentMap() {
           return this.departments.reduce((acc, dept) => ({ ...acc, [dept.id]: dept.name }), {});
-        },
-        get filteredStudents() {
-          if (!this.search.trim()) return this.students;
-          const term = this.search.toLowerCase();
-          return this.students.filter((student) => {
-            return [
-              student._id,
-              student.full_name,
-              student.email,
-              student.phone,
-              this.departmentMap[student.major_dept_id]
-            ].some((value) => String(value || '').toLowerCase().includes(term));
-          });
         },
         get classYears() {
           return new Set(this.students.map((student) => student.year).filter(Boolean)).size;
         },
+        get rangeStart() {
+          if (!this.total || !this.students.length) return 0;
+          return (this.page - 1) * this.pageSize + 1;
+        },
+        get rangeEnd() {
+          if (!this.total || !this.students.length) return 0;
+          return this.rangeStart + this.students.length - 1;
+        },
         init() {
+          this.initFromUrl();
           this.fetchStudents();
         },
         blankForm() {
           return { _id: '', full_name: '', email: '', major_dept_id: '', year: '', pronouns: '', phone: '' };
         },
+        initFromUrl() {
+          const params = new URLSearchParams(window.location.search);
+          const qParam = params.get('q');
+          const majorParam = params.get('major');
+          const yearParam = params.get('year');
+          const sortParam = params.get('sort');
+          const pageParam = params.get('page');
+          const pageSizeParam = params.get('page_size');
+
+          if (qParam) this.query = qParam;
+          if (majorParam) this.selectedMajor = majorParam;
+          if (yearParam) this.selectedYear = yearParam;
+          if (sortParam && this.sortOptions.some((option) => option.value === sortParam)) {
+            this.sort = sortParam;
+          }
+
+          const parsedPage = Number.parseInt(pageParam || '', 10);
+          if (Number.isInteger(parsedPage) && parsedPage > 0) {
+            this.page = parsedPage;
+          }
+
+          const parsedPageSize = Number.parseInt(pageSizeParam || '', 10);
+          if (this.pageSizeOptions.includes(parsedPageSize)) {
+            this.pageSize = parsedPageSize;
+          }
+        },
+        buildRequestParams() {
+          const params = new URLSearchParams();
+          params.set('page', String(this.page));
+          params.set('page_size', String(this.pageSize));
+          params.set('sort', this.sort);
+          const trimmedQuery = this.query.trim();
+          if (trimmedQuery) params.set('q', trimmedQuery);
+          if (this.selectedMajor) params.set('major', this.selectedMajor);
+          if (this.selectedYear) params.set('year', this.selectedYear);
+          return params;
+        },
+        buildHistoryParams() {
+          const params = new URLSearchParams();
+          const trimmedQuery = this.query.trim();
+          if (trimmedQuery) params.set('q', trimmedQuery);
+          if (this.selectedMajor) params.set('major', this.selectedMajor);
+          if (this.selectedYear) params.set('year', this.selectedYear);
+          if (this.sort !== 'full_name') params.set('sort', this.sort);
+          if (this.page > 1) params.set('page', String(this.page));
+          if (this.pageSize !== 10) params.set('page_size', String(this.pageSize));
+          return params;
+        },
+        updateUrl() {
+          const params = this.buildHistoryParams();
+          const nextUrl = params.toString()
+            ? `${window.location.pathname}?${params.toString()}`
+            : window.location.pathname;
+          window.history.replaceState({}, '', nextUrl);
+        },
+        composeMajorOptions(majorsSet) {
+          const values = new Set(majorsSet);
+          if (this.selectedMajor) {
+            values.add(this.selectedMajor);
+          }
+          const options = Array.from(values)
+            .filter((value) => value)
+            .map((value) => ({ value, label: this.departmentMap[value] || value }))
+            .sort((a, b) => a.label.localeCompare(b.label));
+          return [{ value: '', label: 'All majors' }, ...options];
+        },
+        composeYearOptions(yearsSet) {
+          const values = new Set(yearsSet);
+          const selectedYearNumber = Number.parseInt(this.selectedYear || '', 10);
+          if (!Number.isNaN(selectedYearNumber)) {
+            values.add(selectedYearNumber);
+          }
+          const options = Array.from(values)
+            .filter((value) => Number.isInteger(value))
+            .sort((a, b) => a - b)
+            .map((value) => ({ value: String(value), label: String(value) }));
+          return [{ value: '', label: 'All years' }, ...options];
+        },
         async fetchStudents() {
           this.loading = true;
           this.loadError = '';
-          this.hasLoaded = false;
           try {
-            const response = await fetch('/api/students');
+            const params = this.buildRequestParams();
+            const response = await fetch(`/api/students?${params.toString()}`);
             const payload = await response.json().catch(() => null);
-            if (!response.ok || !Array.isArray(payload)) {
+            if (
+              !response.ok ||
+              !payload ||
+              !Array.isArray(payload.items)
+            ) {
               const message = (payload && payload.error) || `Request failed with status ${response.status}`;
               throw new Error(message);
             }
-            this.students = payload.map((student) => ({
-              _id: student._id ?? '',
-              full_name: student.full_name ?? '',
-              email: student.email ?? '',
-              major_dept_id: student.major_dept_id ?? '',
-              year: student.year != null ? String(student.year) : '',
-              pronouns: student.pronouns ?? '',
-              phone: student.phone ?? ''
-            }));
+
+            const majorsSet = new Set();
+            const yearsSet = new Set();
+
+            this.students = payload.items.map((student) => {
+              const majorId = student.major_dept_id ?? '';
+              if (majorId) majorsSet.add(majorId);
+
+              let yearValue = null;
+              if (typeof student.year === 'number' && Number.isInteger(student.year)) {
+                yearValue = student.year;
+              } else if (typeof student.year === 'string' && student.year.trim()) {
+                const parsedYear = Number.parseInt(student.year, 10);
+                if (Number.isInteger(parsedYear)) {
+                  yearValue = parsedYear;
+                }
+              }
+              if (Number.isInteger(yearValue)) {
+                yearsSet.add(yearValue);
+              }
+
+              return {
+                _id: student._id ?? '',
+                full_name: student.full_name ?? '',
+                email: student.email ?? '',
+                major_dept_id: majorId,
+                year: Number.isInteger(yearValue) ? yearValue : null,
+                pronouns: student.pronouns ?? '',
+                phone: student.phone ?? ''
+              };
+            });
+
+            const responsePage = Number.parseInt(payload.page, 10);
+            if (Number.isInteger(responsePage) && responsePage > 0) {
+              this.page = responsePage;
+            }
+
+            const responsePageSize = Number.parseInt(payload.page_size, 10);
+            if (Number.isInteger(responsePageSize) && responsePageSize > 0) {
+              this.pageSize = responsePageSize;
+            }
+
+            this.total = Number.isInteger(payload.total) ? payload.total : 0;
+            this.hasNext = Boolean(payload.has_next);
+            this.hasPrev = Boolean(payload.has_prev);
+
+            this.majorFilterOptions = this.composeMajorOptions(majorsSet);
+            this.yearFilterOptions = this.composeYearOptions(yearsSet);
+
+            if (!this.students.length) {
+              // Ensure filter dropdowns still offer active selections even when empty
+              if (!majorsSet.size) {
+                this.majorFilterOptions = this.composeMajorOptions(new Set());
+              }
+              if (!yearsSet.size) {
+                this.yearFilterOptions = this.composeYearOptions(new Set());
+              }
+            }
+
             this.hasLoaded = true;
+            this.updateUrl();
           } catch (error) {
             console.error('Failed to load students', error);
             this.students = [];
+            this.total = 0;
+            this.hasNext = false;
+            this.hasPrev = false;
+            this.majorFilterOptions = this.composeMajorOptions(new Set());
+            this.yearFilterOptions = this.composeYearOptions(new Set());
             this.loadError = error instanceof Error ? error.message : 'Please refresh and try again.';
             this.showToast('Unable to load students.', 'error', 'Please refresh or try again later.');
           } finally {
@@ -402,6 +607,38 @@
               this.hasLoaded = true;
             }
           }
+        },
+        handleFilterChange(resetPage = false) {
+          if (resetPage) {
+            this.page = 1;
+          }
+          this.fetchStudents();
+        },
+        handlePageSizeChange() {
+          this.page = 1;
+          this.fetchStudents();
+        },
+        goToPrev() {
+          if (this.loading || !this.hasPrev) return;
+          this.page = Math.max(1, this.page - 1);
+          this.fetchStudents();
+        },
+        goToNext() {
+          if (this.loading || !this.hasNext) return;
+          this.page = this.page + 1;
+          this.fetchStudents();
+        },
+        formatNumber(value) {
+          return numberFormatter.format(Math.max(0, value || 0));
+        },
+        rangeSummary() {
+          const start = this.rangeStart;
+          const end = this.rangeEnd;
+          const total = this.total;
+          if (!total) {
+            return '0–0 of 0';
+          }
+          return `${this.formatNumber(start)}–${this.formatNumber(end)} of ${this.formatNumber(total)}`;
         },
         openCreate() {
           this.isEditing = false;
@@ -417,7 +654,7 @@
             full_name: student.full_name,
             email: student.email,
             major_dept_id: student.major_dept_id,
-            year: student.year ? String(student.year) : '',
+            year: student.year != null ? String(student.year) : '',
             pronouns: student.pronouns || '',
             phone: student.phone || ''
           };

@@ -22,6 +22,7 @@ from src.db import (
     get_db,
 )
 from src.routes import reports_bp
+from src.utils.paging import PagingParamError, parse_paging_params
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_FOLDER = BASE_DIR.parent / "frontend"
@@ -357,11 +358,21 @@ def health():
 def list_students():
     try:
         collection = get_students_collection()
+
+        try:
+            paging = parse_paging_params(
+                request.args,
+                allowed_sort_fields={"full_name": "full_name", "year": "year"},
+                default_sort="full_name",
+            )
+        except PagingParamError as exc:
+            return _json_error(str(exc), 400)
+
         filters: Dict[str, Any] = {}
 
         query = _clean_string(request.args.get("q"))
         major = _clean_string(request.args.get("major"))
-        limit_arg = _clean_string(request.args.get("limit"))
+        year_raw = _clean_string(request.args.get("year"))
 
         if query:
             filters["$or"] = [
@@ -370,31 +381,57 @@ def list_students():
             ]
         if major:
             filters["major_dept_id"] = major
+        if year_raw:
+            try:
+                filters["year"] = int(year_raw)
+            except ValueError:
+                return _json_error("year must be an integer.", 400)
 
-        find_kwargs: Dict[str, Any] = {
-            "projection": {
-                "_id": 1,
-                "full_name": 1,
-                "email": 1,
-                "major_dept_id": 1,
-                "year": 1,
-                "phone": 1,
-            },
-            "sort": [("full_name", 1)],
+        projection = {
+            "_id": 1,
+            "full_name": 1,
+            "email": 1,
+            "major_dept_id": 1,
+            "year": 1,
+            "phone": 1,
+            "pronouns": 1,
         }
 
-        cursor = collection.find(filters, **find_kwargs)
-        if limit_arg:
-            try:
-                limit_value = int(limit_arg)
-                if limit_value <= 0:
-                    raise ValueError
-                cursor = cursor.limit(limit_value)
-            except ValueError:
-                return _json_error("limit must be a positive integer.", 400)
+        total = collection.count_documents(filters)
 
-        students = [serialize_student(doc) for doc in cursor]
-        return jsonify(students)
+        page = paging.page
+        page_size = paging.page_size
+        max_page = (total + page_size - 1) // page_size if total else 0
+
+        if max_page == 0:
+            page = 1
+        elif page > max_page:
+            page = max_page
+
+        skip = (page - 1) * page_size if total else 0
+
+        cursor = (
+            collection.find(filters, projection=projection)
+            .sort([paging.sort])
+            .skip(skip)
+            .limit(page_size)
+        )
+
+        items = [serialize_student(doc) for doc in cursor]
+
+        has_next = page < max_page if max_page else False
+        has_prev = page > 1
+
+        return jsonify(
+            {
+                "items": items,
+                "page": page,
+                "page_size": page_size,
+                "total": total,
+                "has_next": has_next,
+                "has_prev": has_prev,
+            }
+        )
     except ConfigError as exc:
         return _handle_config_error(exc)
     except PyMongoError:

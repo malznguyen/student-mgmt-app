@@ -34,12 +34,44 @@ Student management dashboard built with Flask (API) and a static Tailwind/Alpine
 
 | Method | Endpoint | Description |
 | ------ | -------- | ----------- |
-| GET    | `/api/students` | List students. Supports `q` for name/email search. |
+| GET    | `/api/students` | List students with pagination, sorting, and filters (`q`, `major`, `year`). |
 | POST   | `/api/students` | Create a student. Requires `_id`, `full_name`, `email`, `major_dept_id`, `year`. |
 | PUT    | `/api/students/<id>` | Update any student field (email must remain unique). |
 | DELETE | `/api/students/<id>` | Remove a student record. |
 
 Responses are JSON. Validation issues return HTTP 400 with an `error` message and optional `details`; duplicate emails respond with HTTP 409.
+
+### Listing students with pagination
+
+`GET /api/students` accepts the following optional query parameters:
+
+- `page` (integer, default `1`, minimum `1`)
+- `page_size` (integer, default `10`, maximum `100`)
+- `sort` (one of `full_name`, `-full_name`, `year`, `-year`)
+- `q` (case-insensitive match on `full_name` or `email`)
+- `major` (exact match on `major_dept_id`)
+- `year` (integer graduation year)
+
+The response is wrapped in a standard envelope:
+
+```json
+{
+  "items": [/* student documents */],
+  "page": 1,
+  "page_size": 10,
+  "total": 123,
+  "has_next": true,
+  "has_prev": false
+}
+```
+
+Example request:
+
+```bash
+curl "http://localhost:5000/api/students?page=2&page_size=25&sort=-year&q=garcia&major=CS"
+```
+
+> **Note:** `page_size` values above 100 are rejected; the roster defaults to 10 results per page.
 
 ### Sample cURL
 
