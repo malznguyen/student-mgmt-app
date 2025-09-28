@@ -120,11 +120,11 @@
               </div>
               <div class="grid grid-cols-2 gap-3 text-xs text-slate-500 sm:flex sm:flex-col sm:text-right">
                 <div>
-                  <p class="font-semibold text-slate-900" x-text="students.length"></p>
+                  <p class="font-semibold text-slate-900" x-text="hasLoaded ? students.length : '—'"></p>
                   <p>Total students</p>
                 </div>
                 <div>
-                  <p class="font-semibold text-slate-900" x-text="classYears"></p>
+                  <p class="font-semibold text-slate-900" x-text="hasLoaded ? classYears : '—'"></p>
                   <p>Class years tracked</p>
                 </div>
               </div>
@@ -152,7 +152,7 @@
                 </div>
               </template>
 
-              <template x-if="!loading && !loadError && filteredStudents.length === 0">
+              <template x-if="!loading && hasLoaded && !loadError && filteredStudents.length === 0">
                 <div class="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 py-12 text-center">
                   <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
                     <svg class="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16.5 10.5a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" /><path d="M8.25 15.75a6.75 6.75 0 0 0 7.5 0" stroke-linecap="round" /><path d="M5.25 5.25 3 7.5m18-2.25-2.25 2.25" stroke-linecap="round" /></svg>
@@ -168,7 +168,7 @@
                 </div>
               </template>
 
-              <div x-cloak x-show="!loading && filteredStudents.length" class="overflow-hidden rounded-2xl border border-slate-200">
+              <div x-cloak x-show="!loading && hasLoaded && filteredStudents.length" class="overflow-hidden rounded-2xl border border-slate-200">
                 <div class="overflow-x-auto">
                   <table class="min-w-full divide-y divide-slate-200 text-left text-sm table-sticky-header">
                     <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
@@ -334,6 +334,7 @@
         loading: true,
         loadError: '',
         students: [],
+        hasLoaded: false,
         modalOpen: false,
         isEditing: false,
         saving: false,
@@ -372,6 +373,7 @@
         async fetchStudents() {
           this.loading = true;
           this.loadError = '';
+          this.hasLoaded = false;
           try {
             const response = await fetch('/api/students');
             const payload = await response.json().catch(() => null);
@@ -388,6 +390,7 @@
               pronouns: student.pronouns ?? '',
               phone: student.phone ?? ''
             }));
+            this.hasLoaded = true;
           } catch (error) {
             console.error('Failed to load students', error);
             this.students = [];
@@ -395,6 +398,9 @@
             this.showToast('Unable to load students.', 'error', 'Please refresh or try again later.');
           } finally {
             this.loading = false;
+            if (!this.hasLoaded) {
+              this.hasLoaded = true;
+            }
           }
         },
         openCreate() {
@@ -456,10 +462,17 @@
             full_name: this.form.full_name.trim(),
             email: this.form.email.trim(),
             major_dept_id: this.form.major_dept_id,
-            year: this.form.year,
+            year: Number.parseInt(this.form.year, 10),
             pronouns: this.form.pronouns.trim(),
             phone: this.form.phone.trim()
           };
+
+          if (!payload.pronouns) {
+            delete payload.pronouns;
+          }
+          if (!payload.phone) {
+            delete payload.phone;
+          }
 
           const method = this.isEditing ? 'PUT' : 'POST';
           const url = this.isEditing
@@ -478,7 +491,7 @@
             });
             const result = await response.json().catch(() => null);
 
-            if (!response.ok || !result) {
+            if (!response.ok || !result || result.ok !== true) {
               const details = (result && result.details) || {};
               this.errors = details;
               const detailMessage =
@@ -494,9 +507,9 @@
             await this.fetchStudents();
             this.closeModal();
             this.showToast(
-              this.isEditing ? 'Student updated successfully.' : 'Student created successfully.',
+              this.isEditing ? 'Updated' : 'Created',
               'success',
-              this.isEditing ? 'Roster has the latest details.' : 'Roster refreshed with the new profile.'
+              this.isEditing ? 'Student record saved.' : 'Student added to roster.'
             );
           } catch (error) {
             console.error('Failed to save student', error);
@@ -518,7 +531,7 @@
             });
             const result = await response.json().catch(() => null);
 
-            if (!response.ok || !result || !result.deleted) {
+            if (!response.ok || !result || result.ok !== true) {
               this.showToast(
                 (result && result.error) || 'Unable to delete student.',
                 'error',
@@ -528,7 +541,7 @@
             }
 
             await this.fetchStudents();
-            this.showToast('Student removed.', 'success', 'The roster now reflects this change.');
+            this.showToast('Deleted', 'success', 'The roster now reflects this change.');
           } catch (error) {
             console.error('Failed to delete student', error);
             this.showToast('Unable to delete student.', 'error', 'Check your network connection.');

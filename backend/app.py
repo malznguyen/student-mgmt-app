@@ -406,8 +406,7 @@ def create_student():
     try:
         collection = get_students_collection()
         collection.insert_one(cleaned)
-        created = collection.find_one({"_id": cleaned["_id"]})
-        return jsonify(serialize_student(created or cleaned)), 201
+        return jsonify({"ok": True}), 201
     except ConfigError as exc:
         return _handle_config_error(exc)
     except DuplicateKeyError as exc:
@@ -440,8 +439,7 @@ def update_student(student_id: str):
         result = collection.update_one({"_id": student_id}, {"$set": cleaned})
         if result.matched_count == 0:
             return _json_error("Student not found.", 404)
-        updated = collection.find_one({"_id": student_id})
-        return jsonify(serialize_student(updated or cleaned))
+        return jsonify({"ok": True})
     except ConfigError as exc:
         return _handle_config_error(exc)
     except DuplicateKeyError as exc:
@@ -462,7 +460,7 @@ def delete_student(student_id: str):
         result = collection.delete_one({"_id": student_id})
         if result.deleted_count == 0:
             return _json_error("Student not found.", 404)
-        return jsonify({"deleted": True})
+        return jsonify({"ok": True})
     except ConfigError as exc:
         return _handle_config_error(exc)
     except PyMongoError as exc:
