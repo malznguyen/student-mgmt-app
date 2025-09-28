@@ -190,15 +190,13 @@ def _validate_course_payload(
                 errors["credits"] = "Credits are required."
         else:
             try:
-                credits_value = int(float(payload.get("credits")))
+                credits_value_raw = payload.get("credits")
+                credits_value = int(float(credits_value_raw))
                 if credits_value <= 0:
                     raise ValueError
                 cleaned["credits"] = credits_value
             except (TypeError, ValueError):
-                errors["credits"] = "Credits must be a positive number."
-
-    if "description" in payload:
-        cleaned["description"] = _clean_string(payload.get("description"))
+                errors["credits"] = "Credits must be a positive integer."
 
     if "prereq_ids" in payload:
         prereqs = payload.get("prereq_ids")
@@ -208,13 +206,14 @@ def _validate_course_payload(
             cleaned["prereq_ids"] = [
                 _clean_string(value) for value in prereqs if _clean_string(value)
             ]
+        elif isinstance(prereqs, str):
+            cleaned["prereq_ids"] = [
+                part.strip() for part in prereqs.split(",") if part.strip()
+            ]
         else:
             errors["prereq_ids"] = "Prerequisites must be an array of course IDs."
 
-    keep_none_fields = {"midterm", "final", "bonus"}
-    cleaned = {
-        k: v for k, v in cleaned.items() if v is not None or k in keep_none_fields
-    }
+    cleaned = {k: v for k, v in cleaned.items() if v is not None}
     return cleaned, errors
 
 
@@ -478,10 +477,7 @@ def list_courses():
         limit_arg = request.args.get("limit")
 
         if query:
-            filters["$or"] = [
-                {"title": {"$regex": query, "$options": "i"}},
-                {"_id": {"$regex": query, "$options": "i"}},
-            ]
+            filters["title"] = {"$regex": query, "$options": "i"}
         if dept:
             filters["dept_id"] = dept
 
@@ -490,7 +486,6 @@ def list_courses():
             "title": 1,
             "dept_id": 1,
             "credits": 1,
-            "description": 1,
             "prereq_ids": 1,
         }
 
@@ -499,14 +494,13 @@ def list_courses():
             limit_value = _parse_limit_arg(limit_arg)
         except ValueError as exc:
             return _json_error(str(exc), 400)
-        if limit_value:
-            cursor = cursor.limit(limit_value)
+        limit_value = limit_value or 100
+        cursor = cursor.limit(limit_value)
 
         courses = []
         for doc in cursor:
             serialized = serialize_course(doc)
-            if serialized.get("description") is None:
-                serialized["description"] = ""
+            serialized["prereq_ids"] = serialized.get("prereq_ids") or []
             courses.append(serialized)
         return jsonify(courses)
     except ConfigError as exc:
@@ -527,12 +521,15 @@ def create_course():
     try:
         collection = get_courses_collection()
         collection.insert_one(cleaned)
-        created = collection.find_one({"_id": cleaned["_id"]})
-        return jsonify(serialize_course(created or cleaned)), 201
+        return jsonify({"ok": True}), 201
     except ConfigError as exc:
         return _handle_config_error(exc)
     except DuplicateKeyError:
-        return _json_error("Course with this ID already exists.", 409, {"_id": "Choose a different course ID."})
+        return _json_error(
+            "Course with this ID already exists.",
+            409,
+            {"_id": "Choose a different course ID."},
+        )
     except PyMongoError as exc:
         return _handle_db_error("Failed to create course", exc)
 
@@ -556,12 +553,9 @@ def update_course(course_id: str):
         result = collection.update_one({"_id": course_id}, {"$set": cleaned})
         if result.matched_count == 0:
             return _json_error("Course not found.", 404)
-        updated = collection.find_one({"_id": course_id})
-        return jsonify(serialize_course(updated or cleaned))
+        return jsonify({"ok": True})
     except ConfigError as exc:
         return _handle_config_error(exc)
-    except DuplicateKeyError:
-        return _json_error("Course with this ID already exists.", 409, {"_id": "Choose a different course ID."})
     except PyMongoError as exc:
         return _handle_db_error("Failed to update course", exc)
 
@@ -573,9 +567,7 @@ def delete_course(course_id: str):
         result = collection.delete_one({"_id": course_id})
         if result.deleted_count == 0:
             return _json_error("Course not found.", 404)
-        sections_collection = get_sections_collection()
-        active_sections = sections_collection.count_documents({"course_id": course_id})
-        return jsonify({"deleted": True, "active_sections": active_sections})
+        return jsonify({"ok": True})
     except ConfigError as exc:
         return _handle_config_error(exc)
     except PyMongoError as exc:
