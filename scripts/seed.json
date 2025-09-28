@@ -62,5 +62,56 @@
       "year": 2025,
       "phone": "+1-555-201-0008"
     }
+  ],
+  "courses": [
+    {
+      "_id": "CS101",
+      "title": "Introduction to Computer Science",
+      "dept_id": "CS",
+      "credits": 4,
+      "prereq_ids": []
+    },
+    {
+      "_id": "CS210",
+      "title": "Data Structures",
+      "dept_id": "CS",
+      "credits": 4,
+      "prereq_ids": ["CS101"]
+    },
+    {
+      "_id": "MATH221",
+      "title": "Calculus I",
+      "dept_id": "MATH",
+      "credits": 4,
+      "prereq_ids": []
+    },
+    {
+      "_id": "BIO150",
+      "title": "Foundations of Biology",
+      "dept_id": "BIO",
+      "credits": 3,
+      "prereq_ids": []
+    },
+    {
+      "_id": "PHYS140",
+      "title": "General Physics",
+      "dept_id": "PHYS",
+      "credits": 4,
+      "prereq_ids": ["MATH221"]
+    },
+    {
+      "_id": "ECON110",
+      "title": "Principles of Economics",
+      "dept_id": "ECON",
+      "credits": 3,
+      "prereq_ids": []
+    },
+    {
+      "_id": "BUS230",
+      "title": "Business Communication",
+      "dept_id": "BUS",
+      "credits": 3,
+      "prereq_ids": []
+    }
   ]
 }

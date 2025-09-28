@@ -66,8 +66,44 @@ curl -X PUT http://localhost:5000/api/students/S-3001 \
 curl -X DELETE http://localhost:5000/api/students/S-3001
 ```
 
+## Courses API
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET    | `/api/courses` | List courses. Supports `q` (title search), `dept`, and `limit` (defaults to 100). |
+| POST   | `/api/courses` | Create a course. Requires `_id`, `title`, `dept_id`, and integer `credits`; optional `prereq_ids` array. |
+| PUT    | `/api/courses/<id>` | Update an existing course's fields. |
+| DELETE | `/api/courses/<id>` | Remove a course from the catalog. |
+
+Errors return JSON payloads such as `{ "error": "Course not found." }` with the appropriate HTTP status. Duplicate IDs respond with HTTP 409.
+
+### Sample cURL
+
+```bash
+# Create a new course
+curl -X POST http://localhost:5000/api/courses \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "_id": "CS350",
+    "title": "Operating Systems",
+    "dept_id": "CS",
+    "credits": 4,
+    "prereq_ids": ["CS210"]
+  }'
+
+# Update course credits
+curl -X PUT http://localhost:5000/api/courses/CS350 \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "credits": 3
+  }'
+
+# Delete a course
+curl -X DELETE http://localhost:5000/api/courses/CS350
+```
+
 ## Seeding
 
-`python scripts/seed.py` clears the configured collections and loads `scripts/seed.json`, which contains eight realistic sample students covering different majors and class years. Run it any time you want to reset the roster.
+`python scripts/seed.py` clears the configured collections and loads `scripts/seed.json`, which now contains sample students **and** a curated set of seven catalog courses. Run it any time you want to reset the roster and catalog data.
 
 > **Reminder:** keep `backend/.env` out of source control.

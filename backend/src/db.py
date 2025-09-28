@@ -89,10 +89,19 @@ def _ensure_courses_indexes(collection: Collection) -> None:
     if _courses_indexes_created:
         return
 
-    collection.create_index(
-        [("dept_id", ASCENDING)],
-        name="dept_id_idx",
-        background=True,
+    collection.create_indexes(
+        [
+            IndexModel(
+                [("dept_id", ASCENDING)],
+                name="dept_id_idx",
+                background=True,
+            ),
+            IndexModel(
+                [("title", ASCENDING)],
+                name="title_idx",
+                background=True,
+            ),
+        ]
     )
     _courses_indexes_created = True
 
@@ -123,7 +132,6 @@ def serialize_course(document):
         "title": document.get("title"),
         "dept_id": document.get("dept_id"),
         "credits": credits_value,
-        "description": document.get("description", ""),
         "prereq_ids": prereqs,
     }
 
