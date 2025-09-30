@@ -171,7 +171,7 @@
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.25 7.5h13.5" stroke-linecap="round" /><path d="M5.25 12h13.5" stroke-linecap="round" /><path d="M5.25 16.5h13.5" stroke-linecap="round" /></svg>
                 Export plan
               </button>
-              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:cursor-not-allowed disabled:opacity-60" :disabled="!$store.session.isAdmin" :title="$store.session.isAdmin ? 'Create a new section' : 'Admin only'">
+              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
                 New section
               </button>
@@ -293,11 +293,11 @@
                             </td>
                             <td class="px-4 py-3 text-right">
                               <div class="inline-flex items-center gap-2">
-                                <button type="button" @click="openEdit(section)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60" :disabled="!$store.session.isAdmin" :title="$store.session.isAdmin ? 'Edit section' : 'Admin only'">
+                                <button type="button" @click="openEdit(section)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900">
                                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4.5 19.5 3.75-.938a2 2 0 0 0 .938-.52l9.02-9.02a1.5 1.5 0 0 0-2.121-2.122l-9.02 9.02a2 2 0 0 0-.52.938L4.5 19.5Z" /><path d="M14.25 6.75 17.25 9.75" /></svg>
                                   Edit
                                 </button>
-                                <button type="button" @click="deleteSection(section._id)" :disabled="!$store.session.isAdmin || deletingId === section._id" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60" :title="$store.session.isAdmin ? 'Delete section' : 'Admin only'">
+                                <button type="button" @click="deleteSection(section._id)" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">
                                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 7.5h10.5" stroke-linecap="round" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M8.25 7.5V18a1.5 1.5 0 0 0 1.5 1.5h4.5A1.5 1.5 0 0 0 15.75 18V7.5" /></svg>
                                   <span x-text="deletingId === section._id ? 'Removing…' : 'Delete'"></span>
                                 </button>
@@ -650,10 +650,6 @@
           };
         },
         openCreate() {
-          if (!Alpine.store('session').isAdmin) {
-            this.showToast('Admin only', 'error', 'Sign in as admin to manage sections.');
-            return;
-          }
           this.isEditing = false;
           this.resetForm();
           this.errors = {};
@@ -661,10 +657,6 @@
           this.modalOpen = true;
         },
         openEdit(section) {
-          if (!Alpine.store('session').isAdmin) {
-            this.showToast('Admin only', 'error', 'Sign in as admin to manage sections.');
-            return;
-          }
           this.isEditing = true;
           this.resetForm();
           this.form._id = section._id;
@@ -744,10 +736,6 @@
           return payload;
         },
         async saveSection() {
-          if (!Alpine.store('session').isAdmin) {
-            this.showToast('Admin only', 'error', 'Sign in as admin to manage sections.');
-            return;
-          }
           if (!this.validate()) {
             this.showToast('Please review the highlighted fields.', 'error', 'Missing required information.');
             return;
@@ -776,11 +764,6 @@
             });
             const result = await response.json().catch(() => null);
 
-            if (response.status === 403 || (result && result.error === 'forbidden')) {
-              this.showToast('Admin only', 'error', 'Sign in as admin to manage sections.');
-              return;
-            }
-
             if (!response.ok || !result) {
               const details = (result && result.details) || {};
               this.errors = { ...this.errors, ...details };
@@ -789,8 +772,13 @@
                 details.section_no ||
                 details.semester ||
                 details.schedule ||
-                Object.values(details)[0] || '';
-              this.showToast((result && result.error) || 'Unable to save section.', 'error', detailMessage);
+                Object.values(details)[0] ||
+                (result && result.error === 'forbidden' ? 'Please try again later.' : '');
+              const message =
+                result && result.error === 'forbidden'
+                  ? 'Unable to save section.'
+                  : (result && result.error) || 'Unable to save section.';
+              this.showToast(message, 'error', detailMessage);
               return;
             }
 
@@ -810,10 +798,6 @@
           }
         },
         async deleteSection(id) {
-          if (!Alpine.store('session').isAdmin) {
-            this.showToast('Admin only', 'error', 'Sign in as admin to manage sections.');
-            return;
-          }
           if (!window.confirm('Remove this section from the schedule?')) {
             return;
           }
@@ -827,17 +811,16 @@
             });
             const result = await response.json().catch(() => null);
 
-            if (response.status === 403 || (result && result.error === 'forbidden')) {
-              this.showToast('Admin only', 'error', 'Sign in as admin to manage sections.');
-              return;
-            }
-
             if (!response.ok || !result || !result.deleted) {
-              this.showToast(
-                (result && result.error) || 'Unable to delete section.',
-                'error',
-                'Please try again in a moment.'
-              );
+              const message =
+                result && result.error === 'forbidden'
+                  ? 'Unable to delete section.'
+                  : (result && result.error) || 'Unable to delete section.';
+              const detail =
+                result && result.error === 'forbidden'
+                  ? 'Please try again later.'
+                  : 'Please try again in a moment.';
+              this.showToast(message, 'error', detail);
               return;
             }
 

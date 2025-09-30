@@ -167,7 +167,7 @@
               <p class="mt-2 text-slate-600">Track available courses, update details, or add new offerings for the next term.</p>
             </div>
             <div class="flex flex-wrap gap-3">
-              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:cursor-not-allowed disabled:opacity-60" :disabled="!$store.session.isAdmin" :title="$store.session.isAdmin ? 'Add a new course' : 'Admin only'">
+              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
                 Add course
               </button>
@@ -295,11 +295,11 @@
                             <td class="px-4 py-3 align-middle text-sm text-slate-700" x-text="course.dept_id"></td>
                             <td class="px-4 py-3 align-middle text-right text-sm">
                               <div class="inline-flex items-center gap-2">
-                                <button type="button" @click="openEdit(course)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60" :disabled="!$store.session.isAdmin" :title="$store.session.isAdmin ? 'Edit course' : 'Admin only'">
+                                <button type="button" @click="openEdit(course)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900">
                                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4.5 19.5 3.75-.938a2 2 0 0 0 .938-.52l9.02-9.02a1.5 1.5 0 0 0-2.121-2.122l-9.02 9.02a2 2 0 0 0-.52.938L4.5 19.5Z" /><path d="M14.25 6.75 17.25 9.75" /></svg>
                                   Edit
                                 </button>
-                                <button type="button" @click="deleteCourse(course._id)" :disabled="!$store.session.isAdmin || deletingId === course._id" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60" :title="$store.session.isAdmin ? 'Delete course' : 'Admin only'">
+                                <button type="button" @click="deleteCourse(course._id)" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">
                                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 7.5h10.5" stroke-linecap="round" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M8.25 7.5V18a1.5 1.5 0 0 0 1.5 1.5h4.5A1.5 1.5 0 0 0 15.75 18V7.5" /></svg>
                                   <span x-text="deletingId === course._id ? 'Removing…' : 'Delete'"></span>
                                 </button>
@@ -466,10 +466,6 @@
           }
         },
         openCreate() {
-          if (!Alpine.store('session').isAdmin) {
-            this.showToast('Admin only', 'error', 'Sign in as admin to manage courses.');
-            return;
-          }
           this.isEditing = false;
           this.form = this.blankForm();
           this.prereqText = '';
@@ -481,10 +477,6 @@
           });
         },
         openEdit(course) {
-          if (!Alpine.store('session').isAdmin) {
-            this.showToast('Admin only', 'error', 'Sign in as admin to manage courses.');
-            return;
-          }
           this.isEditing = true;
           this.form = {
             _id: course._id,
@@ -529,10 +521,6 @@
           return nextErrors;
         },
         async saveCourse() {
-          if (!Alpine.store('session').isAdmin) {
-            this.showToast('Admin only', 'error', 'Sign in as admin to manage courses.');
-            return;
-          }
           const validationErrors = this.validate();
           if (Object.keys(validationErrors).length) {
             this.errors = validationErrors;
@@ -567,17 +555,21 @@
             });
             const result = await response.json().catch(() => null);
 
-            if (response.status === 403 || (result && result.error === 'forbidden')) {
-              this.showToast('Admin only', 'error', 'Sign in as admin to manage courses.');
-              return;
-            }
-
             if (!response.ok || !result) {
               const details = (result && result.details) || {};
               this.errors = details;
               const detailMessage =
-                details.title || details._id || details.dept_id || details.credits || Object.values(details)[0] || '';
-              this.showToast((result && result.error) || 'Unable to save course.', 'error', detailMessage);
+                details.title ||
+                details._id ||
+                details.dept_id ||
+                details.credits ||
+                Object.values(details)[0] ||
+                (result && result.error === 'forbidden' ? 'Please try again later.' : '');
+              const message =
+                result && result.error === 'forbidden'
+                  ? 'Unable to save course.'
+                  : (result && result.error) || 'Unable to save course.';
+              this.showToast(message, 'error', detailMessage);
               return;
             }
 
@@ -596,10 +588,6 @@
           }
         },
         async deleteCourse(id) {
-          if (!Alpine.store('session').isAdmin) {
-            this.showToast('Admin only', 'error', 'Sign in as admin to manage courses.');
-            return;
-          }
           if (!window.confirm('Remove this course from the catalog?')) {
             return;
           }
@@ -610,12 +598,12 @@
               credentials: 'same-origin'
             });
             const result = await response.json().catch(() => null);
-            if (response.status === 403 || (result && result.error === 'forbidden')) {
-              this.showToast('Admin only', 'error', 'Sign in as admin to manage courses.');
-              return;
-            }
             if (!response.ok || !result || !result.ok) {
-              this.showToast((result && result.error) || 'Unable to delete course.', 'error', 'Please try again later.');
+              const message =
+                result && result.error === 'forbidden'
+                  ? 'Unable to delete course.'
+                  : (result && result.error) || 'Unable to delete course.';
+              this.showToast(message, 'error', 'Please try again later.');
               return;
             }
             this.courses = this.courses.filter((course) => course._id !== id);
