@@ -398,126 +398,122 @@
               </template>
             </div>
           </section>
-        </div>
-      </main>
-    </div>
-  </div>
 
-  <div x-cloak x-show="toast.visible" x-transition class="fixed top-4 right-4 z-50 w-full max-w-sm rounded-xl border px-4 py-3 shadow-lg" :class="toast.variant === 'success' ? 'border-emerald-200 bg-emerald-50/90 text-emerald-800' : 'border-rose-200 bg-rose-50/90 text-rose-700'" role="status" aria-live="polite">
-    <div class="flex items-start gap-3">
-      <span class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full" :class="toast.variant === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'">
-        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <template x-if="toast.variant === 'success'"><path d="M5.25 12.75 9 16.5l9-9" stroke-linecap="round" stroke-linejoin="round" /></template>
-          <template x-if="toast.variant !== 'success'"><path d="M15 9 9 15m0-6 6 6" stroke-linecap="round" stroke-linejoin="round" /></template>
-        </svg>
-      </span>
-      <div>
-        <p class="text-sm font-semibold" x-text="toast.message"></p>
-        <p class="text-xs text-slate-500" x-text="toast.detail"></p>
-      </div>
-      <button type="button" class="ml-auto text-xs font-medium text-slate-500 hover:text-slate-700" @click="toast.visible = false">Dismiss</button>
-    </div>
-  </div>
+          <div x-cloak x-show="toast.visible" x-transition class="fixed top-4 right-4 z-50 w-full max-w-sm rounded-xl border px-4 py-3 shadow-lg" :class="toast.variant === 'success' ? 'border-emerald-200 bg-emerald-50/90 text-emerald-800' : 'border-rose-200 bg-rose-50/90 text-rose-700'" role="status" aria-live="polite">
+            <div class="flex items-start gap-3">
+              <span class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full" :class="toast.variant === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <template x-if="toast.variant === 'success'"><path d="M5.25 12.75 9 16.5l9-9" stroke-linecap="round" stroke-linejoin="round" /></template>
+                  <template x-if="toast.variant !== 'success'"><path d="M15 9 9 15m0-6 6 6" stroke-linecap="round" stroke-linejoin="round" /></template>
+                </svg>
+              </span>
+              <div>
+                <p class="text-sm font-semibold" x-text="toast.message"></p>
+                <p class="text-xs text-slate-500" x-text="toast.detail"></p>
+              </div>
+              <button type="button" class="ml-auto text-xs font-medium text-slate-500 hover:text-slate-700" @click="toast.visible = false">Dismiss</button>
+            </div>
+          </div>
 
-  <div x-cloak x-show="modalOpen" class="fixed inset-0 z-40 flex items-center justify-center px-4 py-6" role="dialog" aria-modal="true">
-    <div class="absolute inset-0 bg-slate-900/40" @click="closeModal()"></div>
-    <div class="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl" x-trap.noscroll="modalOpen" x-transition>
-      <header class="flex items-start justify-between gap-3">
-        <div>
-          <p class="text-xs uppercase tracking-widest text-slate-400" x-text="isEditing ? 'Update section' : 'Create section'"></p>
-          <h2 class="text-2xl font-semibold text-slate-900" x-text="isEditing ? 'Edit section' : 'Add new section'"></h2>
-        </div>
-        <button type="button" class="rounded-lg border border-transparent p-2 text-slate-400 hover:text-slate-600" @click="closeModal()" aria-label="Close dialog">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 9l6 6m0-6-6 6" stroke-linecap="round" /></svg>
-        </button>
-      </header>
-
-      <form class="mt-6 space-y-5" @submit.prevent="saveSection()">
-        <div class="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label for="section-id" class="text-sm font-medium text-slate-700">Section ID</label>
-            <input id="section-id" type="text" x-model="form._id" :disabled="isEditing" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:bg-slate-50" :class="errors._id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. SEC-CS101-2025A-01" required />
-            <p class="mt-1 text-xs text-slate-500">Use the registrar-friendly identifier.</p>
-            <p x-show="errors._id" x-text="errors._id" class="mt-1 text-xs font-medium text-rose-600"></p>
-          </div>
-          <div>
-            <label for="section-course" class="text-sm font-medium text-slate-700">Course</label>
-            <select id="section-course" x-model="form.course_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.course_id ? 'border-rose-300' : 'border-slate-200'" required>
-              <option value="" disabled>Select course</option>
-              <template x-for="course in courseOptions" :key="course._id">
-                <option :value="course._id" x-text="`${course.title} (${course._id})`"></option>
-              </template>
-            </select>
-            <p class="mt-1 text-xs text-slate-500" x-show="!courseOptions.length">No courses available yet — create a course first.</p>
-            <p x-show="errors.course_id" x-text="errors.course_id" class="mt-1 text-xs font-medium text-rose-600"></p>
-          </div>
-        </div>
-
-        <div class="grid gap-5 sm:grid-cols-3">
-          <div>
-            <label for="section-semester" class="text-sm font-medium text-slate-700">Semester</label>
-            <input id="section-semester" type="text" x-model="form.semester" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.semester ? 'border-rose-300' : 'border-slate-200'" placeholder="2025A" required />
-            <p x-show="errors.semester" x-text="errors.semester" class="mt-1 text-xs font-medium text-rose-600"></p>
-          </div>
-          <div>
-            <label for="section-number" class="text-sm font-medium text-slate-700">Section number</label>
-            <input id="section-number" type="text" x-model="form.section_no" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.section_no ? 'border-rose-300' : 'border-slate-200'" placeholder="01" required />
-            <p x-show="errors.section_no" x-text="errors.section_no" class="mt-1 text-xs font-medium text-rose-600"></p>
-          </div>
-          <div>
-            <label for="section-capacity" class="text-sm font-medium text-slate-700">Capacity</label>
-            <input id="section-capacity" type="number" min="0" step="1" x-model="form.capacity" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.capacity ? 'border-rose-300' : 'border-slate-200'" placeholder="30" />
-            <p class="mt-1 text-xs text-slate-500">Leave blank if the seat count has not been assigned.</p>
-            <p x-show="errors.capacity" x-text="errors.capacity" class="mt-1 text-xs font-medium text-rose-600"></p>
-          </div>
-        </div>
-
-        <div class="grid gap-5 sm:grid-cols-2">
-          <div>
-            <label for="section-instructor" class="text-sm font-medium text-slate-700">Instructor ID</label>
-            <input id="section-instructor" type="text" x-model="form.instructor_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.instructor_id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. I-1001" />
-            <p x-show="errors.instructor_id" x-text="errors.instructor_id" class="mt-1 text-xs font-medium text-rose-600"></p>
-          </div>
-          <div>
-            <label for="section-room" class="text-sm font-medium text-slate-700">Room</label>
-            <input id="section-room" type="text" x-model="form.room" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.room ? 'border-rose-300' : 'border-slate-200'" placeholder="ENG-201" />
-            <p x-show="errors.room" x-text="errors.room" class="mt-1 text-xs font-medium text-rose-600"></p>
-          </div>
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between">
-            <label class="text-sm font-medium text-slate-700">Meeting pattern</label>
-            <button
-              type="button"
-              class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
-              @click="addScheduleRow()"
-              :disabled="!$store.session.isAdmin"
-              :title="$store.session.isAdmin ? 'Add meeting' : 'Admin access required'"
-            >
-              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
-              Add meeting
-            </button>
-          </div>
-          <p class="mt-1 text-xs text-slate-500">Specify recurring meetings. Leave empty if the schedule is still being coordinated.</p>
-          <template x-if="errors.schedule">
-            <p class="mt-2 text-xs font-medium text-rose-600" x-text="errors.schedule"></p>
-          </template>
-          <div class="mt-4 space-y-3" x-ref="scheduleList">
-            <template x-if="!form.schedule.length">
-              <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">No meetings added yet.</p>
-            </template>
-            <template x-for="(meeting, index) in form.schedule" :key="meeting.key">
-              <div class="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 sm:grid-cols-7 sm:items-end">
-                <div class="sm:col-span-2">
-                  <label :for="`meeting-dow-${meeting.key}`" class="text-xs font-medium text-slate-600">Day of week</label>
-                  <select :id="`meeting-dow-${meeting.key}`" x-model="meeting.dow" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
-                    <option value="">Select</option>
-                    <template x-for="day in meetingDays" :key="day">
-                      <option :value="day" x-text="day"></option>
-                    </template>
-                  </select>
+          <div x-cloak x-show="modalOpen" class="fixed inset-0 z-40 flex items-center justify-center px-4 py-6" role="dialog" aria-modal="true">
+            <div class="absolute inset-0 bg-slate-900/40" @click="closeModal()"></div>
+            <div class="relative w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-xl" x-trap.noscroll="modalOpen" x-transition>
+              <header class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-xs uppercase tracking-widest text-slate-400" x-text="isEditing ? 'Update section' : 'Create section'"></p>
+                  <h2 class="text-2xl font-semibold text-slate-900" x-text="isEditing ? 'Edit section' : 'Add new section'"></h2>
                 </div>
+                <button type="button" class="rounded-lg border border-transparent p-2 text-slate-400 hover:text-slate-600" @click="closeModal()" aria-label="Close dialog">
+                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 9l6 6m0-6-6 6" stroke-linecap="round" /></svg>
+                </button>
+              </header>
+
+              <form class="mt-6 space-y-5" @submit.prevent="saveSection()">
+                <div class="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <label for="section-id" class="text-sm font-medium text-slate-700">Section ID</label>
+                    <input id="section-id" type="text" x-model="form._id" :disabled="isEditing" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:bg-slate-50" :class="errors._id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. SEC-CS101-2025A-01" required />
+                    <p class="mt-1 text-xs text-slate-500">Use the registrar-friendly identifier.</p>
+                    <p x-show="errors._id" x-text="errors._id" class="mt-1 text-xs font-medium text-rose-600"></p>
+                  </div>
+                  <div>
+                    <label for="section-course" class="text-sm font-medium text-slate-700">Course</label>
+                    <select id="section-course" x-model="form.course_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.course_id ? 'border-rose-300' : 'border-slate-200'" required>
+                      <option value="" disabled>Select course</option>
+                      <template x-for="course in courseOptions" :key="course._id">
+                        <option :value="course._id" x-text="`${course.title} (${course._id})`"></option>
+                      </template>
+                    </select>
+                    <p class="mt-1 text-xs text-slate-500" x-show="!courseOptions.length">No courses available yet — create a course first.</p>
+                    <p x-show="errors.course_id" x-text="errors.course_id" class="mt-1 text-xs font-medium text-rose-600"></p>
+                  </div>
+                </div>
+
+                <div class="grid gap-5 sm:grid-cols-3">
+                  <div>
+                    <label for="section-semester" class="text-sm font-medium text-slate-700">Semester</label>
+                    <input id="section-semester" type="text" x-model="form.semester" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.semester ? 'border-rose-300' : 'border-slate-200'" placeholder="2025A" required />
+                    <p x-show="errors.semester" x-text="errors.semester" class="mt-1 text-xs font-medium text-rose-600"></p>
+                  </div>
+                  <div>
+                    <label for="section-number" class="text-sm font-medium text-slate-700">Section number</label>
+                    <input id="section-number" type="text" x-model="form.section_no" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.section_no ? 'border-rose-300' : 'border-slate-200'" placeholder="01" required />
+                    <p x-show="errors.section_no" x-text="errors.section_no" class="mt-1 text-xs font-medium text-rose-600"></p>
+                  </div>
+                  <div>
+                    <label for="section-capacity" class="text-sm font-medium text-slate-700">Capacity</label>
+                    <input id="section-capacity" type="number" min="0" step="1" x-model="form.capacity" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.capacity ? 'border-rose-300' : 'border-slate-200'" placeholder="30" />
+                    <p class="mt-1 text-xs text-slate-500">Leave blank if the seat count has not been assigned.</p>
+                    <p x-show="errors.capacity" x-text="errors.capacity" class="mt-1 text-xs font-medium text-rose-600"></p>
+                  </div>
+                </div>
+
+                <div class="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <label for="section-instructor" class="text-sm font-medium text-slate-700">Instructor ID</label>
+                    <input id="section-instructor" type="text" x-model="form.instructor_id" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.instructor_id ? 'border-rose-300' : 'border-slate-200'" placeholder="e.g. I-1001" />
+                    <p x-show="errors.instructor_id" x-text="errors.instructor_id" class="mt-1 text-xs font-medium text-rose-600"></p>
+                  </div>
+                  <div>
+                    <label for="section-room" class="text-sm font-medium text-slate-700">Room</label>
+                    <input id="section-room" type="text" x-model="form.room" class="mt-1 w-full rounded-xl border bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" :class="errors.room ? 'border-rose-300' : 'border-slate-200'" placeholder="ENG-201" />
+                    <p x-show="errors.room" x-text="errors.room" class="mt-1 text-xs font-medium text-rose-600"></p>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label class="text-sm font-medium text-slate-700">Meeting pattern</label>
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      @click="addScheduleRow()"
+                      :disabled="!$store.session.isAdmin"
+                      :title="$store.session.isAdmin ? 'Add meeting' : 'Admin access required'"
+                    >
+                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
+                      Add meeting
+                    </button>
+                  </div>
+                  <p class="mt-1 text-xs text-slate-500">Specify recurring meetings. Leave empty if the schedule is still being coordinated.</p>
+                  <template x-if="errors.schedule">
+                    <p class="mt-2 text-xs font-medium text-rose-600" x-text="errors.schedule"></p>
+                  </template>
+                  <div class="mt-4 space-y-3" x-ref="scheduleList">
+                    <template x-if="!form.schedule.length">
+                      <p class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">No meetings added yet.</p>
+                    </template>
+                    <template x-for="(meeting, index) in form.schedule" :key="meeting.key">
+                      <div class="grid gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 sm:grid-cols-7 sm:items-end">
+                        <div class="sm:col-span-2">
+                          <label :for="`meeting-dow-${meeting.key}`" class="text-xs font-medium text-slate-600">Day of week</label>
+                          <select :id="`meeting-dow-${meeting.key}`" x-model="meeting.dow" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                            <option value="">Select</option>
+                            <template x-for="day in meetingDays" :key="day">
+                              <option :value="day" x-text="day"></option>
+                            </template>
+                          </select>
+                        </div>
                 <div class="sm:col-span-2">
                   <label :for="`meeting-start-${meeting.key}`" class="text-xs font-medium text-slate-600">Start time</label>
                   <input :id="`meeting-start-${meeting.key}`" type="time" x-model="meeting.start" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
@@ -556,6 +552,10 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+        </div>
+      </main>
     </div>
   </div>
 
