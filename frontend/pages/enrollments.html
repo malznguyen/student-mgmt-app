@@ -167,7 +167,7 @@
               <p class="mt-2 text-slate-600">Monitor performance, identify grade risks, and manage grading deadlines.</p>
             </div>
             <div class="flex flex-wrap gap-3">
-              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60" :disabled="!$store.session.isAdmin" :title="$store.session.isAdmin ? 'Add enrollment' : 'Admin only'">
+              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-slate-300">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12" stroke-linecap="round" /><path d="M6 12h12" stroke-linecap="round" /></svg>
                 Add enrollment
               </button>
@@ -285,11 +285,11 @@
                             </td>
                             <td class="px-4 py-3 text-right">
                               <div class="inline-flex items-center gap-2">
-                                <button type="button" @click="openEdit(record)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60" :disabled="!$store.session.isAdmin" :title="$store.session.isAdmin ? 'Edit enrollment' : 'Admin only'">
+                                <button type="button" @click="openEdit(record)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900">
                                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4.5 19.5 3.75-.938a2 2 0 0 0 .938-.52l9.02-9.02a1.5 1.5 0 0 0-2.121-2.122l-9.02 9.02a2 2 0 0 0-.52.938L4.5 19.5Z" /><path d="M14.25 6.75 17.25 9.75" /></svg>
                                   Edit
                                 </button>
-                                <button type="button" @click="deleteEnrollment(record._id)" :disabled="!$store.session.isAdmin || deletingId === record._id" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60" :title="$store.session.isAdmin ? 'Delete enrollment' : 'Admin only'">
+                                <button type="button" @click="deleteEnrollment(record._id)" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">
                                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 7.5h10.5" stroke-linecap="round" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M8.25 7.5V18a1.5 1.5 0 0 0 1.5 1.5h4.5A1.5 1.5 0 0 0 15.75 18V7.5" /></svg>
                                   <span x-text="deletingId === record._id ? 'Removing…' : 'Delete'"></span>
                                 </button>
@@ -490,10 +490,6 @@
           this.enrollments = await this.requestEnrollments();
         },
         openCreate() {
-          if (!Alpine.store('session').isAdmin) {
-            this.showToast('Admin only', 'error', 'Sign in as admin to manage enrollments.');
-            return;
-          }
           this.isEditing = false;
           this.form = {
             _id: '',
@@ -510,10 +506,6 @@
           this.modalOpen = true;
         },
         openEdit(record) {
-          if (!Alpine.store('session').isAdmin) {
-            this.showToast('Admin only', 'error', 'Sign in as admin to manage enrollments.');
-            return;
-          }
           this.isEditing = true;
           this.form = {
             _id: record._id,
@@ -579,10 +571,6 @@
           };
         },
         async saveEnrollment() {
-          if (!Alpine.store('session').isAdmin) {
-            this.showToast('Admin only', 'error', 'Sign in as admin to manage enrollments.');
-            return;
-          }
           if (!this.validate()) {
             this.showToast('Please review the highlighted fields.', 'error', 'Missing required information.');
             return;
@@ -605,20 +593,20 @@
             });
             const result = await response.json().catch(() => null);
 
-            if (response.status === 403 || (result && result.error === 'forbidden')) {
-              this.showToast('Admin only', 'error', 'Sign in as admin to manage enrollments.');
-              return;
-            }
-
             if (!response.ok || !result || result.error) {
               this.errors = (result && result.details) || {};
               const detailMessage =
                 this.errors.student_id ||
                 this.errors.section_id ||
                 this.errors.semester ||
-                (result && result.error) ||
-                '';
-              this.showToast((result && result.error) || 'Unable to save enrollment.', 'error', detailMessage);
+                (result && result.error === 'forbidden'
+                  ? 'Please try again later.'
+                  : (result && result.error) || '');
+              const message =
+                result && result.error === 'forbidden'
+                  ? 'Unable to save enrollment.'
+                  : (result && result.error) || 'Unable to save enrollment.';
+              this.showToast(message, 'error', detailMessage);
               return;
             }
 
@@ -634,10 +622,6 @@
           }
         },
         async deleteEnrollment(id) {
-          if (!Alpine.store('session').isAdmin) {
-            this.showToast('Admin only', 'error', 'Sign in as admin to manage enrollments.');
-            return;
-          }
           if (!window.confirm('Remove this enrollment record?')) {
             return;
           }
@@ -650,17 +634,16 @@
             });
             const result = await response.json().catch(() => null);
 
-            if (response.status === 403 || (result && result.error === 'forbidden')) {
-              this.showToast('Admin only', 'error', 'Sign in as admin to manage enrollments.');
-              return;
-            }
-
             if (!response.ok || !result || !result.ok) {
-              this.showToast(
-                (result && result.error) || 'Unable to delete enrollment.',
-                'error',
-                'Please try again in a moment.'
-              );
+              const message =
+                result && result.error === 'forbidden'
+                  ? 'Unable to delete enrollment.'
+                  : (result && result.error) || 'Unable to delete enrollment.';
+              const detail =
+                result && result.error === 'forbidden'
+                  ? 'Please try again later.'
+                  : 'Please try again in a moment.';
+              this.showToast(message, 'error', detail);
               return;
             }
 
