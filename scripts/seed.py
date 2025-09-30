@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -10,9 +11,12 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
-from backend.src.config import ConfigError, get_db_name, get_mongo_uri
-
 ROOT_DIR = Path(__file__).resolve().parent.parent
+
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
+
+from backend.src.config import ConfigError, get_db_name, get_mongo_uri
 BACKEND_DIR = ROOT_DIR / "backend"
 ENV_PATH = BACKEND_DIR / ".env"
 SEED_PATH = Path(__file__).resolve().parent / "seed.json"
