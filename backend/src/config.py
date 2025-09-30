@@ -2,6 +2,11 @@
 
 import os
 
+ADMIN_USER = os.getenv("ADMIN_USER", "admin")
+ADMIN_PASS = os.getenv("ADMIN_PASS", "123456")
+SECRET_KEY = os.getenv("APP_SECRET", "dev-secret-change-me")
+SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "sm_session")
+
 from dotenv import load_dotenv
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -75,4 +80,12 @@ def get_db_name():
     return candidate
 
 
-__all__ = ["ConfigError", "get_mongo_uri", "get_db_name"]
+__all__ = [
+    "ADMIN_PASS",
+    "ADMIN_USER",
+    "ConfigError",
+    "SECRET_KEY",
+    "SESSION_COOKIE_NAME",
+    "get_db_name",
+    "get_mongo_uri",
+]

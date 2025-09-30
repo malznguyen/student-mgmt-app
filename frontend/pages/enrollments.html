@@ -8,8 +8,42 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.store('session', {
+        isAdmin: localStorage.getItem('is_admin') === 'true',
+        setAdmin(value) {
+          this.isAdmin = !!value;
+          if (value) {
+            localStorage.setItem('is_admin', 'true');
+          } else {
+            localStorage.removeItem('is_admin');
+          }
+        }
+      });
+    });
+
+    function layoutShell() {
+      return {
+        sidebarOpen: false,
+        loggingOut: false,
+        async logout() {
+          if (this.loggingOut) return;
+          this.loggingOut = true;
+          try {
+            await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+          } catch (error) {
+            console.error('Logout failed', error);
+          } finally {
+            Alpine.store('session').setAdmin(false);
+            window.location.reload();
+          }
+        }
+      };
+    }
+  </script>
 </head>
-<body class="min-h-screen bg-slate-100 text-slate-700" x-data="{ sidebarOpen: false }" x-on:keydown.escape.window="sidebarOpen = false">
+<body class="min-h-screen bg-slate-100 text-slate-700" x-data="layoutShell()" x-on:keydown.escape.window="sidebarOpen = false">
   <div class="flex min-h-screen">
     <div x-cloak x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-30 bg-slate-900/40 md:hidden" aria-hidden="true" @click="sidebarOpen = false"></div>
     <aside x-cloak x-show="sidebarOpen" x-transition:enter="transition transform duration-200" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition transform duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 md:static md:translate-x-0 md:block">
@@ -57,6 +91,22 @@
           </span>
           Reports
         </a>
+        <template x-if="$store.session.isAdmin">
+          <span class="flex items-center gap-3 rounded-xl px-3 py-2 text-emerald-700 bg-emerald-100/80 font-semibold">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m5.25 12 3.5 3.5L18.75 5.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            Admin access
+          </span>
+        </template>
+        <template x-if="!$store.session.isAdmin">
+          <a href="/pages/login.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900" title="Admin only">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 5.25 15.75 12 9 18.75" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            Login
+          </a>
+        </template>
       </nav>
       <div class="mt-auto px-6 py-6 border-t border-slate-100 text-xs text-slate-500">
         <p>Grade submission window <span class="font-semibold text-slate-700">May 8</span></p>
@@ -76,14 +126,36 @@
               <h1 class="text-lg font-semibold text-slate-900">Enrollments</h1>
             </div>
           </div>
-          <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
-            <a href="/" class="hover:text-slate-900">Dashboard</a>
-            <a href="/pages/students.html" class="hover:text-slate-900">Students</a>
-            <a href="/pages/courses.html" class="hover:text-slate-900">Courses</a>
-            <a href="/pages/sections.html" class="hover:text-slate-900">Sections</a>
-            <a href="/pages/enrollments.html" class="text-slate-900">Enrollments</a>
-            <a href="/pages/reports.html" class="hover:text-slate-900">Reports</a>
-          </nav>
+          <div class="flex items-center gap-4">
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+              <a href="/" class="hover:text-slate-900">Dashboard</a>
+              <a href="/pages/students.html" class="hover:text-slate-900">Students</a>
+              <a href="/pages/courses.html" class="hover:text-slate-900">Courses</a>
+              <a href="/pages/sections.html" class="hover:text-slate-900">Sections</a>
+              <a href="/pages/enrollments.html" class="text-slate-900">Enrollments</a>
+              <a href="/pages/reports.html" class="hover:text-slate-900">Reports</a>
+            </nav>
+            <div class="flex items-center gap-3 text-xs sm:text-sm font-semibold text-slate-600">
+              <template x-if="$store.session.isAdmin">
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    Admin
+                  </span>
+                  <button type="button" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60" @click="logout" :disabled="loggingOut" :title="loggingOut ? 'Signing out…' : 'Sign out of admin mode'">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15.75 8.25 19.5 12l-3.75 3.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M19.5 12h-9" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 19.5H6.75A2.25 2.25 0 0 1 4.5 17.25v-10.5A2.25 2.25 0 0 1 6.75 4.5H12" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    <span x-text="loggingOut ? 'Signing out…' : 'Logout'"></span>
+                  </button>
+                </div>
+              </template>
+              <template x-if="!$store.session.isAdmin">
+                <a href="/pages/login.html" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900" title="Sign in for admin features">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 5.25 15.75 12 9 18.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M4.5 12h11.25" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  Login
+                </a>
+              </template>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -95,7 +167,7 @@
               <p class="mt-2 text-slate-600">Monitor performance, identify grade risks, and manage grading deadlines.</p>
             </div>
             <div class="flex flex-wrap gap-3">
-              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-slate-300">
+              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60" :disabled="!$store.session.isAdmin" :title="$store.session.isAdmin ? 'Add enrollment' : 'Admin only'">
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12" stroke-linecap="round" /><path d="M6 12h12" stroke-linecap="round" /></svg>
                 Add enrollment
               </button>
@@ -213,11 +285,11 @@
                             </td>
                             <td class="px-4 py-3 text-right">
                               <div class="inline-flex items-center gap-2">
-                                <button type="button" @click="openEdit(record)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900">
+                                <button type="button" @click="openEdit(record)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60" :disabled="!$store.session.isAdmin" :title="$store.session.isAdmin ? 'Edit enrollment' : 'Admin only'">
                                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4.5 19.5 3.75-.938a2 2 0 0 0 .938-.52l9.02-9.02a1.5 1.5 0 0 0-2.121-2.122l-9.02 9.02a2 2 0 0 0-.52.938L4.5 19.5Z" /><path d="M14.25 6.75 17.25 9.75" /></svg>
                                   Edit
                                 </button>
-                                <button type="button" @click="deleteEnrollment(record._id)" :disabled="deletingId === record._id" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50">
+                                <button type="button" @click="deleteEnrollment(record._id)" :disabled="!$store.session.isAdmin || deletingId === record._id" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60" :title="$store.session.isAdmin ? 'Delete enrollment' : 'Admin only'">
                                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 7.5h10.5" stroke-linecap="round" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M8.25 7.5V18a1.5 1.5 0 0 0 1.5 1.5h4.5A1.5 1.5 0 0 0 15.75 18V7.5" /></svg>
                                   <span x-text="deletingId === record._id ? 'Removing…' : 'Delete'"></span>
                                 </button>
@@ -418,6 +490,10 @@
           this.enrollments = await this.requestEnrollments();
         },
         openCreate() {
+          if (!Alpine.store('session').isAdmin) {
+            this.showToast('Admin only', 'error', 'Sign in as admin to manage enrollments.');
+            return;
+          }
           this.isEditing = false;
           this.form = {
             _id: '',
@@ -434,6 +510,10 @@
           this.modalOpen = true;
         },
         openEdit(record) {
+          if (!Alpine.store('session').isAdmin) {
+            this.showToast('Admin only', 'error', 'Sign in as admin to manage enrollments.');
+            return;
+          }
           this.isEditing = true;
           this.form = {
             _id: record._id,
@@ -499,6 +579,10 @@
           };
         },
         async saveEnrollment() {
+          if (!Alpine.store('session').isAdmin) {
+            this.showToast('Admin only', 'error', 'Sign in as admin to manage enrollments.');
+            return;
+          }
           if (!this.validate()) {
             this.showToast('Please review the highlighted fields.', 'error', 'Missing required information.');
             return;
@@ -516,9 +600,15 @@
             const response = await fetch(url, {
               method,
               headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
               body: JSON.stringify(payload)
             });
             const result = await response.json().catch(() => null);
+
+            if (response.status === 403 || (result && result.error === 'forbidden')) {
+              this.showToast('Admin only', 'error', 'Sign in as admin to manage enrollments.');
+              return;
+            }
 
             if (!response.ok || !result || result.error) {
               this.errors = (result && result.details) || {};
@@ -544,6 +634,10 @@
           }
         },
         async deleteEnrollment(id) {
+          if (!Alpine.store('session').isAdmin) {
+            this.showToast('Admin only', 'error', 'Sign in as admin to manage enrollments.');
+            return;
+          }
           if (!window.confirm('Remove this enrollment record?')) {
             return;
           }
@@ -551,9 +645,15 @@
           this.deletingId = id;
           try {
             const response = await fetch(`/api/enrollments/${encodeURIComponent(id)}`, {
-              method: 'DELETE'
+              method: 'DELETE',
+              credentials: 'same-origin'
             });
             const result = await response.json().catch(() => null);
+
+            if (response.status === 403 || (result && result.error === 'forbidden')) {
+              this.showToast('Admin only', 'error', 'Sign in as admin to manage enrollments.');
+              return;
+            }
 
             if (!response.ok || !result || !result.ok) {
               this.showToast(

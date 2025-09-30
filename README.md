@@ -222,3 +222,19 @@ curl -X DELETE http://localhost:5000/api/enrollments/<enrollment_id>
 `python scripts/seed.py` clears the configured collections and loads `scripts/seed.json`, which now contains sample students, seven catalog courses, eight ready-to-use class sections, and ten example enrollments with precomputed grades. Run it any time you want to reset the roster, catalog, and schedule data.
 
 > **Reminder:** keep `backend/.env` out of source control.
+
+## Admin access
+
+The management UI and all write APIs now require a short admin session.
+
+* Visit [`/pages/login.html`](http://localhost:5000/pages/login.html) to sign in. Successful login will redirect you to the dashboard and unlock create/update/delete controls in the UI.
+* Default credentials: **username** `admin`, **password** `123456`.
+* Override the fixed credentials (and the Flask session secret) by defining these environment variables in `backend/.env`:
+
+  ```env
+  ADMIN_USER=some-user
+  ADMIN_PASS=super-secret
+  APP_SECRET=change-me
+  ```
+
+Use the new `POST /api/login`, `POST /api/logout`, and `GET /api/me` endpoints to automate health checks or CLI workflows. Logging out or clearing cookies reverts the UI to read-only mode.

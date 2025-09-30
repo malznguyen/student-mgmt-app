@@ -9,6 +9,7 @@ from pymongo.errors import DuplicateKeyError, PyMongoError
 from bson import ObjectId
 from bson.errors import InvalidId
 
+from src import config
 from src.config import ConfigError
 from src.db import (
     get_courses_collection,
@@ -21,14 +22,17 @@ from src.db import (
     serialize_student,
     get_db,
 )
-from src.routes import reports_bp
+from src.routes import auth_simple_bp, reports_bp, require_admin
 from src.utils.paging import PagingParamError, parse_paging_params
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_FOLDER = BASE_DIR.parent / "frontend"
 
 app = Flask(__name__, static_folder=str(STATIC_FOLDER), static_url_path="/")
+app.secret_key = config.SECRET_KEY
+app.config["SESSION_COOKIE_NAME"] = config.SESSION_COOKIE_NAME
 
+app.register_blueprint(auth_simple_bp)
 app.register_blueprint(reports_bp)
 
 logger = logging.getLogger(__name__)
@@ -440,6 +444,7 @@ def list_students():
 
 
 @app.post("/api/students")
+@require_admin
 def create_student():
     data = request.get_json(silent=True)
     cleaned, errors = _validate_student_payload(data, require_all=True)
@@ -466,6 +471,7 @@ def create_student():
 
 
 @app.put("/api/students/<student_id>")
+@require_admin
 def update_student(student_id: str):
     data = request.get_json(silent=True)
     cleaned, errors = _validate_student_payload(data, require_all=False)
@@ -499,6 +505,7 @@ def update_student(student_id: str):
 
 
 @app.delete("/api/students/<student_id>")
+@require_admin
 def delete_student(student_id: str):
     try:
         collection = get_students_collection()
@@ -556,6 +563,7 @@ def list_courses():
 
 
 @app.post("/api/courses")
+@require_admin
 def create_course():
     data = request.get_json(silent=True)
     cleaned, errors = _validate_course_payload(data, require_all=True)
@@ -581,6 +589,7 @@ def create_course():
 
 
 @app.put("/api/courses/<course_id>")
+@require_admin
 def update_course(course_id: str):
     data = request.get_json(silent=True)
     cleaned, errors = _validate_course_payload(data, require_all=False)
@@ -607,6 +616,7 @@ def update_course(course_id: str):
 
 
 @app.delete("/api/courses/<course_id>")
+@require_admin
 def delete_course(course_id: str):
     try:
         collection = get_courses_collection()
@@ -699,6 +709,7 @@ def _ensure_course_exists(course_id: str) -> bool:
 
 
 @app.post("/api/sections")
+@require_admin
 def create_section():
     data = request.get_json(silent=True)
     cleaned, errors = _validate_section_payload(data, require_all=True)
@@ -736,6 +747,7 @@ def create_section():
 
 
 @app.put("/api/sections/<section_id>")
+@require_admin
 def update_section(section_id: str):
     data = request.get_json(silent=True)
     cleaned, errors = _validate_section_payload(data, require_all=False)
@@ -785,6 +797,7 @@ def update_section(section_id: str):
 
 
 @app.delete("/api/sections/<section_id>")
+@require_admin
 def delete_section(section_id: str):
     try:
         collection = get_sections_collection()
@@ -859,6 +872,7 @@ def list_enrollments():
 
 
 @app.post("/api/enrollments")
+@require_admin
 def create_enrollment():
     data = request.get_json(silent=True)
     cleaned, errors = _validate_enrollment_payload(data, require_all=True)
@@ -904,6 +918,7 @@ def create_enrollment():
 
 
 @app.put("/api/enrollments/<enrollment_id>")
+@require_admin
 def update_enrollment(enrollment_id: str):
     data = request.get_json(silent=True)
     cleaned, errors = _validate_enrollment_payload(data, require_all=False)
@@ -994,6 +1009,7 @@ def update_enrollment(enrollment_id: str):
 
 
 @app.delete("/api/enrollments/<enrollment_id>")
+@require_admin
 def delete_enrollment(enrollment_id: str):
     try:
         collection = get_enrollments_collection()

@@ -9,8 +9,42 @@
   <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.store('session', {
+        isAdmin: localStorage.getItem('is_admin') === 'true',
+        setAdmin(value) {
+          this.isAdmin = !!value;
+          if (value) {
+            localStorage.setItem('is_admin', 'true');
+          } else {
+            localStorage.removeItem('is_admin');
+          }
+        }
+      });
+    });
+
+    function layoutShell() {
+      return {
+        sidebarOpen: false,
+        loggingOut: false,
+        async logout() {
+          if (this.loggingOut) return;
+          this.loggingOut = true;
+          try {
+            await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+          } catch (error) {
+            console.error('Logout failed', error);
+          } finally {
+            Alpine.store('session').setAdmin(false);
+            window.location.reload();
+          }
+        }
+      };
+    }
+  </script>
 </head>
-<body class="min-h-screen bg-slate-100 text-slate-700" x-data="{ sidebarOpen: false }" x-on:keydown.escape.window="sidebarOpen = false">
+<body class="min-h-screen bg-slate-100 text-slate-700" x-data="layoutShell()" x-on:keydown.escape.window="sidebarOpen = false">
   <div class="flex min-h-screen">
     <div x-cloak x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-30 bg-slate-900/40 md:hidden" aria-hidden="true" @click="sidebarOpen = false"></div>
     <aside x-cloak x-show="sidebarOpen" x-transition:enter="transition transform duration-200" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition transform duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-200 md:static md:translate-x-0 md:block">
@@ -58,6 +92,22 @@
           </span>
           Reports
         </a>
+        <template x-if="$store.session.isAdmin">
+          <span class="flex items-center gap-3 rounded-xl px-3 py-2 text-emerald-700 bg-emerald-100/80 font-semibold">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m5.25 12 3.5 3.5L18.75 5.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            Admin access
+          </span>
+        </template>
+        <template x-if="!$store.session.isAdmin">
+          <a href="/pages/login.html" class="flex items-center gap-3 rounded-xl px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900" title="Admin only">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 5.25 15.75 12 9 18.75" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            Login
+          </a>
+        </template>
       </nav>
       <div class="mt-auto px-6 py-6 border-t border-slate-100 text-xs text-slate-500">
         <p>Academic year <span class="font-semibold text-slate-700">2025</span></p>
@@ -77,14 +127,36 @@
               <h1 class="text-lg font-semibold text-slate-900">Welcome back, team</h1>
             </div>
           </div>
-          <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
-            <a href="/" class="text-slate-900">Overview</a>
-            <a href="/pages/students.html" class="hover:text-slate-900">Students</a>
-            <a href="/pages/courses.html" class="hover:text-slate-900">Courses</a>
-            <a href="/pages/sections.html" class="hover:text-slate-900">Sections</a>
-            <a href="/pages/enrollments.html" class="hover:text-slate-900">Enrollments</a>
-            <a href="/pages/reports.html" class="hover:text-slate-900">Reports</a>
-          </nav>
+          <div class="flex items-center gap-4">
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+              <a href="/" class="text-slate-900">Overview</a>
+              <a href="/pages/students.html" class="hover:text-slate-900">Students</a>
+              <a href="/pages/courses.html" class="hover:text-slate-900">Courses</a>
+              <a href="/pages/sections.html" class="hover:text-slate-900">Sections</a>
+              <a href="/pages/enrollments.html" class="hover:text-slate-900">Enrollments</a>
+              <a href="/pages/reports.html" class="hover:text-slate-900">Reports</a>
+            </nav>
+            <div class="flex items-center gap-3 text-xs sm:text-sm font-semibold text-slate-600">
+              <template x-if="$store.session.isAdmin">
+                <div class="flex items-center gap-3">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                    Admin
+                  </span>
+                  <button type="button" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60" @click="logout" :disabled="loggingOut" :title="loggingOut ? 'Signing out…' : 'Sign out of admin mode'">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15.75 8.25 19.5 12l-3.75 3.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M19.5 12h-9" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 19.5H6.75A2.25 2.25 0 0 1 4.5 17.25v-10.5A2.25 2.25 0 0 1 6.75 4.5H12" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    <span x-text="loggingOut ? 'Signing out…' : 'Logout'"></span>
+                  </button>
+                </div>
+              </template>
+              <template x-if="!$store.session.isAdmin">
+                <a href="/pages/login.html" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-900" title="Sign in for admin features">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 5.25 15.75 12 9 18.75" stroke-linecap="round" stroke-linejoin="round" /><path d="M4.5 12h11.25" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  Login
+                </a>
+              </template>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -96,7 +168,7 @@
               <p class="mt-2 text-slate-600">Track enrollment, retention, and performance metrics for the current academic cycle.</p>
             </div>
             <div class="flex flex-wrap gap-3">
-              <a href="/pages/students.html" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-slate-300">
+              <a href="/pages/students.html" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:border-slate-300" x-show="$store.session.isAdmin" x-cloak>
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
                 Add student
               </a>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in · Student Mgmt</title>
+  <link rel="stylesheet" href="../style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.store('session', {
+        isAdmin: localStorage.getItem('is_admin') === 'true',
+        setAdmin(value) {
+          this.isAdmin = !!value;
+          if (value) {
+            localStorage.setItem('is_admin', 'true');
+          } else {
+            localStorage.removeItem('is_admin');
+          }
+        }
+      });
+      Alpine.data('loginPage', loginPage);
+    });
+
+    function loginPage() {
+      return {
+        form: { username: '', password: '' },
+        error: '',
+        loading: false,
+        async submit() {
+          if (this.loading) return;
+          this.error = '';
+          this.loading = true;
+          try {
+            const response = await fetch('/api/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'same-origin',
+              body: JSON.stringify({
+                username: this.form.username.trim(),
+                password: this.form.password
+              })
+            });
+            const result = await response.json().catch(() => null);
+            if (!response.ok || !result || result.ok !== true) {
+              this.error = result && result.error === 'invalid_credentials'
+                ? 'Invalid username or password. Please try again.'
+                : 'Unable to sign in. Please try again shortly.';
+              return;
+            }
+            Alpine.store('session').setAdmin(true);
+            window.location.href = '/';
+          } catch (error) {
+            console.error('Login failed', error);
+            this.error = 'Unable to sign in. Check your connection and try again.';
+          } finally {
+            this.loading = false;
+          }
+        }
+      };
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-700">
+  <main class="flex min-h-screen items-center justify-center px-4 py-12" x-data="loginPage()">
+    <div class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-lg">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-slate-400">Student Mgmt</p>
+          <h1 class="mt-1 text-2xl font-semibold text-slate-900">Admin sign in</h1>
+        </div>
+        <a href="/" class="text-xs font-semibold text-slate-500 hover:text-slate-700">Back to dashboard</a>
+      </div>
+      <p class="mt-4 text-sm text-slate-600">Use the administrator credentials to enable roster management features.</p>
+      <form class="mt-6 space-y-4" @submit.prevent="submit">
+        <div>
+          <label for="username" class="text-sm font-medium text-slate-700">Username</label>
+          <input id="username" type="text" x-model="form.username" autocomplete="username" required class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
+        </div>
+        <div>
+          <div class="flex items-center justify-between">
+            <label for="password" class="text-sm font-medium text-slate-700">Password</label>
+            <span class="text-xs font-medium text-slate-400">Default: 123456</span>
+          </div>
+          <input id="password" type="password" x-model="form.password" autocomplete="current-password" required class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
+        </div>
+        <button type="submit" class="w-full rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60" :disabled="loading">
+          <span x-text="loading ? 'Signing in…' : 'Sign in'"></span>
+        </button>
+        <template x-if="error">
+          <p class="rounded-xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-sm text-rose-700" x-text="error"></p>
+        </template>
+      </form>
+    </div>
+  </main>
+</body>
+</html>
