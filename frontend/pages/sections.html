@@ -9,18 +9,72 @@
   <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script>
-    document.addEventListener('alpine:init', () => {
-      Alpine.store('session', {
-        isAdmin: localStorage.getItem('is_admin') === 'true',
-        setAdmin(value) {
-          this.isAdmin = !!value;
-          if (value) {
-            localStorage.setItem('is_admin', 'true');
-          } else {
-            localStorage.removeItem('is_admin');
+    const SESSION_CACHE_KEY = 'session_cache_v1';
+
+    function createSessionStore() {
+      let cached = null;
+      try {
+        const raw = localStorage.getItem(SESSION_CACHE_KEY);
+        cached = raw ? JSON.parse(raw) : null;
+      } catch (error) {
+        console.warn('Unable to parse cached session.', error);
+      }
+
+      return {
+        user: cached && typeof cached === 'object' ? cached.user || null : null,
+        isAdmin: cached && typeof cached === 'object' ? !!cached.isAdmin : false,
+        setFromUser(user) {
+          this.user = user || null;
+          this.isAdmin = !!(user && user.role === 'admin');
+          this.persist();
+        },
+        setFromServer(isAdmin) {
+          this.isAdmin = !!isAdmin;
+          if (!this.isAdmin) {
+            this.user = null;
+          }
+          this.persist();
+        },
+        reset() {
+          this.user = null;
+          this.isAdmin = false;
+          this.persist();
+        },
+        persist() {
+          try {
+            if (this.user || this.isAdmin) {
+              localStorage.setItem(
+                SESSION_CACHE_KEY,
+                JSON.stringify({ user: this.user, isAdmin: this.isAdmin })
+              );
+            } else {
+              localStorage.removeItem(SESSION_CACHE_KEY);
+            }
+          } catch (error) {
+            console.warn('Unable to persist session cache.', error);
           }
         }
-      });
+      };
+    }
+
+    async function refreshSessionFromServer(store) {
+      try {
+        const response = await fetch('/api/me', { credentials: 'same-origin' });
+        if (!response.ok) {
+          throw new Error('Failed to fetch session');
+        }
+        const data = await response.json();
+        store.setFromServer(Boolean(data && data.is_admin));
+      } catch (error) {
+        console.error('Unable to refresh session state.', error);
+        store.setFromServer(false);
+      }
+    }
+
+    document.addEventListener('alpine:init', () => {
+      const sessionStore = createSessionStore();
+      Alpine.store('session', sessionStore);
+      refreshSessionFromServer(sessionStore);
     });
 
     function layoutShell() {
@@ -30,12 +84,14 @@
         async logout() {
           if (this.loggingOut) return;
           this.loggingOut = true;
+          const sessionStore = Alpine.store('session');
           try {
             await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
           } catch (error) {
             console.error('Logout failed', error);
           } finally {
-            Alpine.store('session').setAdmin(false);
+            sessionStore.reset();
+            await refreshSessionFromServer(sessionStore);
             window.location.reload();
           }
         }
@@ -171,7 +227,13 @@
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.25 7.5h13.5" stroke-linecap="round" /><path d="M5.25 12h13.5" stroke-linecap="round" /><path d="M5.25 16.5h13.5" stroke-linecap="round" /></svg>
                 Export plan
               </button>
-              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+              <button
+                type="button"
+                @click="openCreate()"
+                :disabled="!$store.session.isAdmin"
+                :title="$store.session.isAdmin ? 'Add a new section' : 'Admin access required'"
+                class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:cursor-not-allowed disabled:opacity-60"
+              >
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
                 New section
               </button>
@@ -293,11 +355,23 @@
                             </td>
                             <td class="px-4 py-3 text-right">
                               <div class="inline-flex items-center gap-2">
-                                <button type="button" @click="openEdit(section)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900">
+                                <button
+                                  type="button"
+                                  @click="openEdit(section)"
+                                  :disabled="!$store.session.isAdmin"
+                                  :title="$store.session.isAdmin ? 'Edit section' : 'Admin access required'"
+                                  class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
                                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4.5 19.5 3.75-.938a2 2 0 0 0 .938-.52l9.02-9.02a1.5 1.5 0 0 0-2.121-2.122l-9.02 9.02a2 2 0 0 0-.52.938L4.5 19.5Z" /><path d="M14.25 6.75 17.25 9.75" /></svg>
                                   Edit
                                 </button>
-                                <button type="button" @click="deleteSection(section._id)" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">
+                                <button
+                                  type="button"
+                                  @click="deleteSection(section._id)"
+                                  :disabled="!$store.session.isAdmin"
+                                  :title="$store.session.isAdmin ? 'Delete section' : 'Admin access required'"
+                                  class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
                                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 7.5h10.5" stroke-linecap="round" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M8.25 7.5V18a1.5 1.5 0 0 0 1.5 1.5h4.5A1.5 1.5 0 0 0 15.75 18V7.5" /></svg>
                                   <span x-text="deletingId === section._id ? 'Removing…' : 'Delete'"></span>
                                 </button>
@@ -414,7 +488,13 @@
         <div>
           <div class="flex items-center justify-between">
             <label class="text-sm font-medium text-slate-700">Meeting pattern</label>
-            <button type="button" class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300" @click="addScheduleRow()">
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+              @click="addScheduleRow()"
+              :disabled="!$store.session.isAdmin"
+              :title="$store.session.isAdmin ? 'Add meeting' : 'Admin access required'"
+            >
               <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
               Add meeting
             </button>
@@ -447,7 +527,13 @@
                   <input :id="`meeting-end-${meeting.key}`" type="time" x-model="meeting.end" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200" />
                 </div>
                 <div class="sm:col-span-1 flex items-end">
-                  <button type="button" class="inline-flex items-center gap-1 rounded-full border border-transparent bg-white px-3 py-1.5 text-xs font-medium text-rose-600 hover:border-rose-200 hover:bg-rose-50" @click="removeScheduleRow(meeting.key)">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 rounded-full border border-transparent bg-white px-3 py-1.5 text-xs font-medium text-rose-600 hover:border-rose-200 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    @click="removeScheduleRow(meeting.key)"
+                    :disabled="!$store.session.isAdmin"
+                    :title="$store.session.isAdmin ? 'Remove meeting' : 'Admin access required'"
+                  >
                     <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 9 9 15m0-6 6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
                     Remove
                   </button>
@@ -459,7 +545,12 @@
 
         <div class="flex items-center justify-end gap-3 pt-2">
           <button type="button" class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:border-slate-300 disabled:opacity-50" @click="closeModal()" :disabled="saving">Cancel</button>
-          <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:opacity-50" :disabled="saving">
+          <button
+            type="submit"
+            class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="saving || !$store.session.isAdmin"
+            :title="$store.session.isAdmin ? (saving ? 'Saving…' : 'Save section') : 'Admin access required'"
+          >
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.25 12.75 9 16.5l9-9" stroke-linecap="round" stroke-linejoin="round" /></svg>
             <span x-text="saving ? 'Saving…' : 'Save section'"></span>
           </button>
@@ -483,6 +574,13 @@
         deletingId: '',
         toastTimeout: null,
         toast: { visible: false, message: '', detail: '', variant: 'success' },
+        ensureAdmin(detail = 'Sign in to manage sections.') {
+          if (Alpine.store('session').isAdmin) {
+            return true;
+          }
+          this.showToast('Admin access required', 'error', detail);
+          return false;
+        },
         meetingDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
         form: {
           _id: '',
@@ -622,10 +720,16 @@
         newScheduleRow() {
           return { key: this.generateKey(), dow: '', start: '', end: '' };
         },
-        addScheduleRow() {
+       addScheduleRow() {
+          if (!this.ensureAdmin('Sign in to modify section schedules.')) {
+            return;
+          }
           this.form.schedule.push(this.newScheduleRow());
         },
         removeScheduleRow(key) {
+          if (!this.ensureAdmin('Sign in to modify section schedules.')) {
+            return;
+          }
           this.form.schedule = this.form.schedule.filter((meeting) => meeting.key !== key);
         },
         toScheduleRows(entries) {
@@ -649,7 +753,10 @@
             schedule: []
           };
         },
-        openCreate() {
+       openCreate() {
+          if (!this.ensureAdmin()) {
+            return;
+          }
           this.isEditing = false;
           this.resetForm();
           this.errors = {};
@@ -657,6 +764,9 @@
           this.modalOpen = true;
         },
         openEdit(section) {
+          if (!this.ensureAdmin()) {
+            return;
+          }
           this.isEditing = true;
           this.resetForm();
           this.form._id = section._id;
@@ -735,7 +845,10 @@
           }
           return payload;
         },
-        async saveSection() {
+       async saveSection() {
+          if (!this.ensureAdmin('Sign in to modify section data.')) {
+            return;
+          }
           if (!this.validate()) {
             this.showToast('Please review the highlighted fields.', 'error', 'Missing required information.');
             return;
@@ -797,7 +910,10 @@
             this.saving = false;
           }
         },
-        async deleteSection(id) {
+       async deleteSection(id) {
+          if (!this.ensureAdmin('Sign in to modify section data.')) {
+            return;
+          }
           if (!window.confirm('Remove this section from the schedule?')) {
             return;
           }
