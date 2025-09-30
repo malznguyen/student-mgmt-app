@@ -9,18 +9,72 @@
   <script defer src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script>
-    document.addEventListener('alpine:init', () => {
-      Alpine.store('session', {
-        isAdmin: localStorage.getItem('is_admin') === 'true',
-        setAdmin(value) {
-          this.isAdmin = !!value;
-          if (value) {
-            localStorage.setItem('is_admin', 'true');
-          } else {
-            localStorage.removeItem('is_admin');
+    const SESSION_CACHE_KEY = 'session_cache_v1';
+
+    function createSessionStore() {
+      let cached = null;
+      try {
+        const raw = localStorage.getItem(SESSION_CACHE_KEY);
+        cached = raw ? JSON.parse(raw) : null;
+      } catch (error) {
+        console.warn('Unable to parse cached session.', error);
+      }
+
+      return {
+        user: cached && typeof cached === 'object' ? cached.user || null : null,
+        isAdmin: cached && typeof cached === 'object' ? !!cached.isAdmin : false,
+        setFromUser(user) {
+          this.user = user || null;
+          this.isAdmin = !!(user && user.role === 'admin');
+          this.persist();
+        },
+        setFromServer(isAdmin) {
+          this.isAdmin = !!isAdmin;
+          if (!this.isAdmin) {
+            this.user = null;
+          }
+          this.persist();
+        },
+        reset() {
+          this.user = null;
+          this.isAdmin = false;
+          this.persist();
+        },
+        persist() {
+          try {
+            if (this.user || this.isAdmin) {
+              localStorage.setItem(
+                SESSION_CACHE_KEY,
+                JSON.stringify({ user: this.user, isAdmin: this.isAdmin })
+              );
+            } else {
+              localStorage.removeItem(SESSION_CACHE_KEY);
+            }
+          } catch (error) {
+            console.warn('Unable to persist session cache.', error);
           }
         }
-      });
+      };
+    }
+
+    async function refreshSessionFromServer(store) {
+      try {
+        const response = await fetch('/api/me', { credentials: 'same-origin' });
+        if (!response.ok) {
+          throw new Error('Failed to fetch session');
+        }
+        const data = await response.json();
+        store.setFromServer(Boolean(data && data.is_admin));
+      } catch (error) {
+        console.error('Unable to refresh session state.', error);
+        store.setFromServer(false);
+      }
+    }
+
+    document.addEventListener('alpine:init', () => {
+      const sessionStore = createSessionStore();
+      Alpine.store('session', sessionStore);
+      refreshSessionFromServer(sessionStore);
     });
 
     function layoutShell() {
@@ -30,12 +84,14 @@
         async logout() {
           if (this.loggingOut) return;
           this.loggingOut = true;
+          const sessionStore = Alpine.store('session');
           try {
             await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
           } catch (error) {
             console.error('Logout failed', error);
           } finally {
-            Alpine.store('session').setAdmin(false);
+            sessionStore.reset();
+            await refreshSessionFromServer(sessionStore);
             window.location.reload();
           }
         }
@@ -167,7 +223,13 @@
               <p class="mt-2 text-slate-600">Track available courses, update details, or add new offerings for the next term.</p>
             </div>
             <div class="flex flex-wrap gap-3">
-              <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
+              <button
+                type="button"
+                @click="openCreate()"
+                :disabled="!$store.session.isAdmin"
+                :title="$store.session.isAdmin ? 'Add a new course' : 'Admin access required'"
+                class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:cursor-not-allowed disabled:opacity-60"
+              >
                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
                 Add course
               </button>
@@ -261,10 +323,16 @@
                         <h3 class="text-lg font-semibold text-slate-900">No courses match the filters</h3>
                         <p class="mt-1 text-sm text-slate-500">Adjust the search or add a new course to populate the catalog.</p>
                       </div>
-                      <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
-                        Add course
-                      </button>
+                    <button
+                      type="button"
+                      @click="openCreate()"
+                      :disabled="!$store.session.isAdmin"
+                      :title="$store.session.isAdmin ? 'Add a new course' : 'Admin access required'"
+                      class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6v12m6-6H6" stroke-linecap="round" /></svg>
+                      Add course
+                    </button>
                     </div>
                   </template>
 
@@ -295,11 +363,23 @@
                             <td class="px-4 py-3 align-middle text-sm text-slate-700" x-text="course.dept_id"></td>
                             <td class="px-4 py-3 align-middle text-right text-sm">
                               <div class="inline-flex items-center gap-2">
-                                <button type="button" @click="openEdit(course)" class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900">
+                                <button
+                                  type="button"
+                                  @click="openEdit(course)"
+                                  :disabled="!$store.session.isAdmin"
+                                  :title="$store.session.isAdmin ? 'Edit course' : 'Admin access required'"
+                                  class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
                                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m4.5 19.5 3.75-.938a2 2 0 0 0 .938-.52l9.02-9.02a1.5 1.5 0 0 0-2.121-2.122l-9.02 9.02a2 2 0 0 0-.52.938L4.5 19.5Z" /><path d="M14.25 6.75 17.25 9.75" /></svg>
                                   Edit
                                 </button>
-                                <button type="button" @click="deleteCourse(course._id)" class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">
+                                <button
+                                  type="button"
+                                  @click="deleteCourse(course._id)"
+                                  :disabled="!$store.session.isAdmin"
+                                  :title="$store.session.isAdmin ? 'Delete course' : 'Admin access required'"
+                                  class="inline-flex items-center gap-1 rounded-full border border-transparent px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
                                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.75 7.5h10.5" stroke-linecap="round" /><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5" /><path d="M8.25 7.5V18a1.5 1.5 0 0 0 1.5 1.5h4.5A1.5 1.5 0 0 0 15.75 18V7.5" /></svg>
                                   <span x-text="deletingId === course._id ? 'Removing…' : 'Delete'"></span>
                                 </button>
@@ -375,7 +455,12 @@
               </div>
               <div class="flex items-center justify-end gap-3 pt-4">
                 <button type="button" class="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:border-slate-300 disabled:opacity-50" @click="closeModal()" :disabled="saving">Cancel</button>
-                <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:opacity-50" :disabled="saving">
+                <button
+                  type="submit"
+                  class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-smooth disabled:cursor-not-allowed disabled:opacity-60"
+                  :disabled="saving || !$store.session.isAdmin"
+                  :title="$store.session.isAdmin ? (saving ? 'Saving…' : 'Save course') : 'Admin access required'"
+                >
                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5.25 12.75 9 16.5l9-9" stroke-linecap="round" stroke-linejoin="round" /></svg>
                   <span x-text="saving ? 'Saving…' : 'Save course'"></span>
                 </button>
@@ -414,6 +499,13 @@
         errors: {},
         toastTimeout: null,
         toast: { visible: false, message: '', detail: '', variant: 'success' },
+        ensureAdmin(detail = 'Sign in to manage courses.') {
+          if (Alpine.store('session').isAdmin) {
+            return true;
+          }
+          this.showToast('Admin access required', 'error', detail);
+          return false;
+        },
         get filteredCourses() {
           const term = this.search.trim().toLowerCase();
           return this.courses.filter((course) => {
@@ -466,6 +558,9 @@
           }
         },
         openCreate() {
+          if (!this.ensureAdmin()) {
+            return;
+          }
           this.isEditing = false;
           this.form = this.blankForm();
           this.prereqText = '';
@@ -477,6 +572,9 @@
           });
         },
         openEdit(course) {
+          if (!this.ensureAdmin()) {
+            return;
+          }
           this.isEditing = true;
           this.form = {
             _id: course._id,
@@ -521,6 +619,9 @@
           return nextErrors;
         },
         async saveCourse() {
+          if (!this.ensureAdmin('Sign in to modify course data.')) {
+            return;
+          }
           const validationErrors = this.validate();
           if (Object.keys(validationErrors).length) {
             this.errors = validationErrors;
@@ -588,6 +689,9 @@
           }
         },
         async deleteCourse(id) {
+          if (!this.ensureAdmin('Sign in to modify course data.')) {
+            return;
+          }
           if (!window.confirm('Remove this course from the catalog?')) {
             return;
           }
